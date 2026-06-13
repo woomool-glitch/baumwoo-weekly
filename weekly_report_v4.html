@@ -553,7 +553,15 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
     <div style="overflow-x:auto"><table class="mtbl" id="monthly-sum-tbl"></table></div>
 
     <!-- ③ 하단: 주차별 상세 -->
-    <div class="shd" style="margin-top:28px">주차별 상세</div>
+    <div style="margin-top:28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd2);padding-bottom:6px">
+      <span style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:0.08em;text-transform:uppercase">상세 보기</span>
+      <div style="display:flex;gap:0;border:1px solid var(--bd2)">
+        <button id="viewModeWeek" onclick="setDetailMode('week')"
+          style="padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;background:var(--accent);color:#fff">주차 기준</button>
+        <button id="viewModeMonth" onclick="setDetailMode('month')"
+          style="padding:4px 12px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;border:none;background:var(--bg2);color:var(--tx2)">월 기준</button>
+      </div>
+    </div>
     <div style="overflow-x:auto"><table class="mtbl" id="mtbl"></table></div>
 
     <!-- ④ 업무내용 날짜순 리스트 -->
@@ -1531,6 +1539,7 @@ function renderMonthly(){
   }
 
   // ── 주차별 상세 테이블 ──
+  _detailMode = 'week'; // 월 변경 시 주차 기준으로 초기화
   const tbl=document.getElementById('mtbl');
   if(!data.length){
     tbl.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
@@ -1568,7 +1577,7 @@ function renderMonthly(){
     tbody.appendChild(hdr);
 
     // 일별 행
-    let wkWork=0,wkEveCnt=0,wkEveAmt=0,wkWkdCnt=0,wkWkdAmt=0;
+    let wkWork=0,wkRestMin=0,wkEveCnt=0,wkEveAmt=0,wkWkdCnt=0,wkWkdAmt=0;
     (sv.days||[]).forEach((d,idx)=>{
       if(d.extra) return;
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
@@ -1577,6 +1586,7 @@ function renderMonthly(){
       const wm=calcWork(inM,outM,restM);
       const meal=calcMeal(inM,outM,dow,d.holiday||false);
       if(wm!=null) wkWork+=wm;
+      if(inM!=null&&outM!=null) wkRestMin+=restM;
       if(meal.type==='eve'){wkEveCnt+=meal.count;wkEveAmt+=meal.amt;}
       if(meal.type==='wkd'){wkWkdCnt+=meal.count;wkWkdAmt+=meal.amt;}
 
@@ -1613,6 +1623,7 @@ function renderMonthly(){
   });
 
   tbl.appendChild(tbody);
+  _detailArgs={year,month,data,db}; // 캐시 저장
 
   // ── 세로형 바 차트 ──
   const maxW2=Math.max(...data.map(d=>d.totalWorkMin||0),1);
@@ -1726,6 +1737,157 @@ function renderMonthlySummary(year, month){
       </tr>
     </tbody>
   `;
+}
+
+let _detailMode = 'week'; // 'week' or 'month'
+let _detailArgs = null;   // {year, month, data, db} 캐시
+
+function setDetailMode(mode){
+  _detailMode = mode;
+  // 버튼 스타일 토글
+  const btnW = document.getElementById('viewModeWeek');
+  const btnM = document.getElementById('viewModeMonth');
+  if(btnW && btnM){
+    if(mode==='week'){
+      btnW.style.cssText='padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;background:var(--accent);color:#fff';
+      btnM.style.cssText='padding:4px 12px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;border:none;background:var(--bg2);color:var(--tx2)';
+    } else {
+      btnW.style.cssText='padding:4px 12px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;border:none;background:var(--bg2);color:var(--tx2)';
+      btnM.style.cssText='padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;background:var(--accent);color:#fff';
+    }
+  }
+  if(_detailArgs) renderDetailTable(_detailArgs.year, _detailArgs.month, _detailArgs.data, _detailArgs.db);
+}
+
+function renderDetailTable(year, month, data, db){
+  _detailArgs = {year, month, data, db};
+  if(_detailMode==='week') renderDetailByWeek(data);
+  else renderDetailByMonth(year, month, db);
+}
+
+// ── 주차 기준 (기존 방식) ──
+function renderDetailByWeek(data){
+  const tbl=document.getElementById('mtbl');
+  if(!data||!data.length){
+    tbl.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
+    return;
+  }
+  const DAYS3=['일','월','화','수','목','금','토'];
+  tbl.innerHTML=`<thead><tr>
+    <th>날짜</th><th>요일</th><th style="text-align:left;padding-left:12px">업무내용</th>
+    <th>출근</th><th>퇴근</th><th>업무시간</th><th>휴게</th>
+    <th style="color:var(--green)">식대</th>
+  </tr></thead>`;
+  const tbody=document.createElement('tbody');
+  data.forEach(sv=>{
+    const mon=new Date(sv.monday);
+    const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+    const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
+    if(tbody.children.length>0){
+      const spacer=document.createElement('tr');
+      spacer.innerHTML='<td colspan="8" style="height:16px;border:none;background:transparent"></td>';
+      tbody.appendChild(spacer);
+    }
+    const hdr=document.createElement('tr');hdr.style.cssText='background:var(--bg2)';
+    hdr.innerHTML=`<td colspan="8" style="padding:8px 12px;font-weight:700;font-size:13px;text-align:left;border-top:2px solid var(--accent);border-left:3px solid var(--accent)">
+      ${sv.week}주차 &nbsp;<span style="font-size:11px;font-weight:400;color:var(--tx3)">${period}</span></td>`;
+    tbody.appendChild(hdr);
+    let wkWork=0,wkEveCnt=0,wkEveAmt=0,wkWkdCnt=0,wkWkdAmt=0;
+    (sv.days||[]).forEach((d,idx)=>{
+      if(d.extra) return;
+      const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
+      const dow=dd.getDay();
+      const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
+      const wm=calcWork(inM,outM,restM);
+      const meal=calcMeal(inM,outM,dow,d.holiday||false);
+      if(wm!=null) wkWork+=wm;
+      if(meal.type==='eve'){wkEveCnt+=meal.count;wkEveAmt+=meal.amt;}
+      if(meal.type==='wkd'){wkWkdCnt+=meal.count;wkWkdAmt+=meal.amt;}
+      const noWork=d.inTime==='-'||(inM==null&&outM==null);
+      const tr=document.createElement('tr');
+      if(dow===6)tr.classList.add('sat');else if(dow===0)tr.classList.add('sun');
+      const dateStr=`${dd.getMonth()+1}/${String(dd.getDate()).padStart(2,'0')}`;
+      const mealHtml=meal.count>0?`<span style="font-size:11px;font-weight:600;color:${meal.type==='eve'?'#A84800':'var(--purple)'}">${won(meal.amt)}</span>`:'';
+      tr.innerHTML=`<td style="font-weight:600">${dateStr}</td><td style="color:var(--tx2)">${DAYS3[dow]}</td>
+        <td style="text-align:left;padding-left:12px;white-space:normal;max-width:280px;word-break:break-all">${d.task||'<span style="color:var(--tx3)">—</span>'}</td>
+        <td>${noWork?'-':(d.inTime||'')}</td><td>${noWork?'-':(d.outTime||'')}</td>
+        <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'h'}</td><td>${mealHtml}</td>`;
+      tbody.appendChild(tr);
+    });
+    const wkMC=wkEveCnt+wkWkdCnt,wkMA=wkEveAmt+wkWkdAmt;
+    const sub=document.createElement('tr');sub.className='sum-row';
+    sub.innerHTML=`<td colspan="3" style="text-align:right;padding-right:12px;font-size:11px">${sv.week}주차 소계</td>
+      <td colspan="2"></td><td>${m2s(wkWork)}</td><td>${wkRestMin>0?m2s(wkRestMin):'-'}</td>
+      <td style="color:var(--green);font-weight:700">${wkMC>0?`${wkMC}회·${won(wkMA)}`:'-'}</td>`;
+    tbody.appendChild(sub);
+  });
+  tbl.appendChild(tbody);
+}
+
+// ── 월 기준 (5/1~5/31 일자 기준) ──
+function renderDetailByMonth(year, month, db){
+  const tbl=document.getElementById('mtbl');
+  const DAYS3=['일','월','화','수','목','금','토'];
+  const firstDay=new Date(year,month-1,1);
+  const lastDay=new Date(year,month,0);
+
+  // 해당 월 전체 날짜 데이터 수집
+  const dayMap={};
+  Object.values(db).forEach(sv=>{
+    if(!sv.days) return;
+    const mon=new Date(sv.monday);
+    sv.days.forEach((d,idx)=>{
+      if(d.extra) return;
+      const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
+      if(dd<firstDay||dd>lastDay) return;
+      dayMap[fmtKey(dd)]={date:dd,day:d};
+    });
+  });
+
+  const keys=Object.keys(dayMap).sort();
+  if(!keys.length){
+    tbl.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
+    return;
+  }
+
+  tbl.innerHTML=`<thead><tr>
+    <th>날짜</th><th>요일</th><th style="text-align:left;padding-left:12px">업무내용</th>
+    <th>출근</th><th>퇴근</th><th>업무시간</th><th>휴게</th>
+    <th style="color:var(--green)">식대</th>
+  </tr></thead>`;
+  const tbody=document.createElement('tbody');
+  let totWork=0,totRestMin=0,totEveCnt=0,totEveAmt=0,totWkdCnt=0,totWkdAmt=0;
+
+  keys.forEach(k=>{
+    const {date:dd, day:d}=dayMap[k];
+    const dow=dd.getDay();
+    const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
+    const wm=calcWork(inM,outM,restM);
+    const meal=calcMeal(inM,outM,dow,d.holiday||false);
+    if(wm!=null) totWork+=wm;
+    if(inM!=null&&outM!=null) totRestMin+=restM;
+    if(meal.type==='eve'){totEveCnt+=meal.count;totEveAmt+=meal.amt;}
+    if(meal.type==='wkd'){totWkdCnt+=meal.count;totWkdAmt+=meal.amt;}
+    const noWork=d.inTime==='-'||(inM==null&&outM==null);
+    const tr=document.createElement('tr');
+    if(dow===6)tr.classList.add('sat');else if(dow===0)tr.classList.add('sun');
+    const dateStr=`${dd.getMonth()+1}/${String(dd.getDate()).padStart(2,'0')}`;
+    const mealHtml=meal.count>0?`<span style="font-size:11px;font-weight:600;color:${meal.type==='eve'?'#A84800':'var(--purple)'}">${won(meal.amt)}</span>`:'';
+    tr.innerHTML=`<td style="font-weight:600">${dateStr}</td><td style="color:var(--tx2)">${DAYS3[dow]}</td>
+      <td style="text-align:left;padding-left:12px;white-space:normal;max-width:280px;word-break:break-all">${d.task||'<span style="color:var(--tx3)">—</span>'}</td>
+      <td>${noWork?'-':(d.inTime||'')}</td><td>${noWork?'-':(d.outTime||'')}</td>
+      <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'h'}</td><td>${mealHtml}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // 월 합계
+  const totMC=totEveCnt+totWkdCnt,totMA=totEveAmt+totWkdAmt;
+  const sumTr=document.createElement('tr');sumTr.className='sum-row';
+  sumTr.innerHTML=`<td colspan="3" style="text-align:right;padding-right:12px;font-size:11px">${month}월 합계 (${keys.length}일)</td>
+    <td colspan="2"></td><td>${m2s(totWork)}</td><td>${totRestMin>0?m2s(totRestMin):'-'}</td>
+    <td style="color:var(--green);font-weight:700">${totMC>0?`${totMC}회·${won(totMA)}`:'-'}</td>`;
+  tbody.appendChild(sumTr);
+  tbl.appendChild(tbody);
 }
 
 function renderTaskList(year, month, db){
