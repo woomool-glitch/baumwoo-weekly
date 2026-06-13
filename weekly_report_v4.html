@@ -5,54 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>주간업무일지 — 범우건축</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyBF6ayMebu6R8Pnb23Uj97RsIKqLVpUZyc",
+    authDomain: "baumwoo-weekly.firebaseapp.com",
+    projectId: "baumwoo-weekly",
+    storageBucket: "baumwoo-weekly.firebasestorage.app",
+    messagingSenderId: "666598631643",
+    appId: "1:666598631643:web:c5d9e17a1c63206e5bc4fe"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBF6ayMebu6R8Pnb23Uj97RsIKqLVpUZyc",
-  authDomain: "baumwoo-weekly.firebaseapp.com",
-  projectId: "baumwoo-weekly",
-  storageBucket: "baumwoo-weekly.firebasestorage.app",
-  messagingSenderId: "666598631643",
-  appId: "1:666598631643:web:c5d9e17a1c63206e5bc4fe"
-};
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const DOC_REF = db.collection('weekly').doc('main');
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const DOC_REF = doc(db, 'weekly', 'main');
-
-// Firestore 저장
-window._fsSave = async function(data){
-  try{
-    await setDoc(DOC_REF, { payload: JSON.stringify(data), updatedAt: new Date().toISOString() });
-    console.log('Firestore 저장 완료');
-    return true;
-  }catch(e){
-    console.warn('Firestore 저장 실패:', e.message);
-    return false;
-  }
-};
-
-// Firestore 불러오기
-window._fsLoad = async function(){
-  try{
-    const snap = await getDoc(DOC_REF);
-    if(snap.exists()){
-      const raw = snap.data().payload;
-      return JSON.parse(raw);
+  window._fsSave = async function(data){
+    try{
+      await DOC_REF.set({ payload: JSON.stringify(data), updatedAt: new Date().toISOString() });
+      console.log('Firestore 저장 완료', Object.keys(data).length+'주차');
+      return true;
+    }catch(e){
+      console.warn('Firestore 저장 실패:', e.message);
+      return false;
     }
-    return null;
-  }catch(e){
-    console.warn('Firestore 로드 실패:', e.message);
-    return null;
-  }
-};
+  };
 
-// 앱이 준비되면 initDB 호출
-window._fsReady = true;
-if(window._pendingInitDB) window._pendingInitDB();
+  window._fsLoad = async function(){
+    try{
+      const snap = await DOC_REF.get();
+      if(snap.exists){
+        return JSON.parse(snap.data().payload);
+      }
+      return null;
+    }catch(e){
+      console.warn('Firestore 로드 실패:', e.message);
+      return null;
+    }
+  };
+
+  window._fsReady = true;
+  if(window._pendingInitDB) window._pendingInitDB();
+})();
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
