@@ -73,8 +73,8 @@
   --red:#E06050;--amber:#D4A520;--amber-bg:#1E1600;
   --purple:#9B7EE8;--purple-bg:#180E30;
 }}
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-body{font-family:'Inter','Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;font-size:13px;color:var(--tx);background:var(--bg);-webkit-font-smoothing:antialiased}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;font-size:13px;color:var(--tx);background:var(--bg);-webkit-font-smoothing:antialiased}
 .app{max-width:980px;margin:0 auto;padding:20px 20px 80px}
 
 /* ── 헤더 ── */
@@ -303,7 +303,7 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
 .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
 .login-box{width:320px;padding:40px 36px;background:var(--bg);border:1px solid var(--bd2);display:flex;flex-direction:column;gap:18px}
 .login-title{font-size:20px;font-weight:700;color:var(--tx);text-align:center;margin-bottom:2px;letter-spacing:-0.02em}
-.login-sub{font-size:11px;font-weight:500;color:var(--tx3);text-align:center;margin-top:-10px;letter-spacing:0.04em;text-transform:uppercase}
+.login-sub{font-size:11px;font-weight:500;color:var(--tx3);text-align:center;margin-top:-10px;letter-spacing:0.04em}
 .login-input{width:100%;border:1px solid var(--bd2);background:var(--bg2);color:var(--tx);font-size:18px;padding:12px 14px;font-family:inherit;letter-spacing:6px;text-align:center;transition:border-color .15s}
 .login-input:focus{outline:none;border-color:var(--accent)}
 .login-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.04em;transition:opacity .15s}
@@ -358,7 +358,6 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
 <div class="hdr">
   <div>
     <div class="hdr-t">주간업무일지 — 범우건축</div>
-    <div class="hdr-s">데이터는 이 PC 브라우저에만 저장 · 인터넷 불필요</div>
   </div>
   <div style="display:flex;gap:6px;align-items:center">
     <button class="ab" onclick="exportDB()" style="font-size:11px" title="전체 데이터를 JSON 파일로 백업">DB 내보내기</button>
@@ -726,18 +725,19 @@ function loadWeek(k){return loadDB()[k]||null;}
    로그인 & 비밀번호 관리
 ═══════════════════════════════════ */
 const PW_KEY = 'baumwoo_pw';
-const SESSION_KEY = 'baumwoo_session';
 
 function getSavedPw(){
   return localStorage.getItem(PW_KEY) || '0000';
 }
 
+// 로그인 상태: 메모리 변수 (새로고침하면 항상 초기화 → 자동 로그아웃)
+let _isLoggedIn = false;
+
 function doLogin(){
   const input = document.getElementById('loginPw').value;
   const err   = document.getElementById('loginErr');
   if(input === getSavedPw()){
-    // 세션 저장 (탭 닫을 때까지 유지)
-    sessionStorage.setItem(SESSION_KEY, '1');
+    _isLoggedIn = true;
     document.getElementById('loginOverlay').style.display = 'none';
     err.textContent = '';
   } else {
@@ -748,7 +748,8 @@ function doLogin(){
 }
 
 function checkSession(){
-  if(sessionStorage.getItem(SESSION_KEY) === '1'){
+  // 메모리 변수 기반 → 새로고침 시 항상 false → 로그인 화면 표시
+  if(_isLoggedIn){
     document.getElementById('loginOverlay').style.display = 'none';
   } else {
     document.getElementById('loginOverlay').style.display = 'flex';
