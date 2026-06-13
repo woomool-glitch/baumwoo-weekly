@@ -709,13 +709,20 @@ function loadDB(){
 
 function saveDB(db){
   _dbCache = db;
-  // localStorage 동시 저장 (오프라인 fallback)
+  // localStorage 동시 저장 (항상)
   try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){}
-  // Firestore 저장 (비동기)
+  // Firestore 저장
   if(window._fsSave){
     window._fsSave(db).then(ok=>{
-      if(ok) console.log('Firestore 저장 완료', Object.keys(db).length+'주차');
+      if(ok){
+        console.log('Firestore 저장 완료', Object.keys(db).length+'주차');
+      } else {
+        // Firestore 실패 시 경고 (localStorage엔 저장됨)
+        showToast('클라우드 저장 실패 — 로컬에만 저장됨', 1);
+      }
     });
+  } else {
+    showToast('클라우드 연결 안됨 — 로컬에만 저장됨', 1);
   }
 }
 
@@ -811,22 +818,29 @@ async function initDB(){
   try{
     const fsData = await window._fsLoad();
     if(fsData && Object.keys(fsData).length > 0){
+      // ✅ Firestore 데이터 있음 → 무조건 Firestore 우선
       _dbCache = fsData;
       try{ localStorage.setItem(DB_KEY, JSON.stringify(fsData)); }catch(e){}
       console.log('Firestore 로드 완료:', Object.keys(fsData).length+'주차');
     } else {
       // Firestore 비어있음 → localStorage 확인
       const local = (() => { try{ return JSON.parse(localStorage.getItem(DB_KEY)||'{}'); }catch{ return{}; }})();
-      _dbCache = local;
       if(Object.keys(local).length > 0){
-        // 로컬 데이터 Firestore로 마이그레이션
-        await window._fsSave(local);
-        console.log('로컬 데이터 → Firestore 마이그레이션:', Object.keys(local).length+'주차');
+        // localStorage에 데이터 있으면 Firestore로 마이그레이션 (한 번만)
+        _dbCache = local;
+        const ok = await window._fsSave(local);
+        if(ok) console.log('로컬 → Firestore 마이그레이션 완료:', Object.keys(local).length+'주차');
+      } else {
+        // 둘 다 비어있음 → 새 사용자
+        _dbCache = {};
+        console.log('새 데이터베이스 시작');
       }
     }
   }catch(e){
-    console.warn('Firestore 초기화 실패, localStorage 사용:', e.message);
-    _dbCache = null;
+    // Firestore 접근 실패 (네트워크 오류 등) → localStorage fallback
+    console.warn('Firestore 접근 실패, localStorage 사용:', e.message);
+    const local = (() => { try{ return JSON.parse(localStorage.getItem(DB_KEY)||'{}'); }catch{ return{}; }})();
+    _dbCache = local;
   }
 }
 
@@ -1171,6 +1185,14 @@ function doImport(){
   if(!xlsData.length){setResult('파일을 먼저 업로드하세요','warn');return;}
   const mk=fmtKey(curMon);const sun=new Date(curMon);sun.setDate(sun.getDate()+6);const sk=fmtKey(sun);
   let matched=0;
+
+  // ── 불러오기 전 이번 주 7일 출퇴근 전체 초기화 ──
+  // (이전에 저장된 값이 남아있는 문제 방지)
+  rows.forEach(r=>{
+    if(r.extra||!r.date) return;
+    r.inTime='-'; r.outTime='-'; r.rest=0; r.imp=true; r.holiday=false; r.note='';
+  });
+
   // 매칭된 날짜 추적
   const matchedKeys=new Set();
 
