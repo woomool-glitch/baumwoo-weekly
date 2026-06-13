@@ -286,10 +286,59 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
 .bwrap2 .wbar{height:100%;background:linear-gradient(90deg,#378ADD,#5fb8ef);transition:width .45s ease}
 .bwrap2 .wval{font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;padding-left:10px;flex:1}
 @media(max-width:520px){.monthly-top{flex-direction:column}.total-time-card{width:100%}}
+/* ── 로그인 화면 ── */
+.login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{width:320px;padding:36px 32px;background:var(--bg);border:0.5px solid var(--bd2);display:flex;flex-direction:column;gap:16px}
+.login-title{font-size:18px;font-weight:700;color:var(--tx);text-align:center;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--tx3);text-align:center;margin-top:-8px}
+.login-input{width:100%;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--tx);font-size:16px;padding:10px 12px;font-family:inherit;letter-spacing:4px;text-align:center}
+.login-input:focus{outline:none;border-color:var(--blue)}
+.login-btn{width:100%;background:var(--tx);color:var(--bg);border:none;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.login-btn:hover{opacity:.85}
+.login-err{font-size:12px;color:var(--red);text-align:center;min-height:16px}
+/* 비밀번호 변경 모달 */
+.pw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;align-items:center;justify-content:center}
+.pw-modal.open{display:flex}
+.pw-box{width:300px;background:var(--bg);border:0.5px solid var(--bd2);padding:28px 24px;display:flex;flex-direction:column;gap:12px}
+.pw-box h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.pw-box input{width:100%;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--tx);font-size:14px;padding:8px 10px;font-family:inherit}
+.pw-box input:focus{outline:none;border-color:var(--blue)}
+.pw-box-row{display:flex;gap:8px}
+.pw-box-row button{flex:1;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--tx)}
+.pw-box-row button.pr{background:var(--tx);color:var(--bg);border-color:var(--tx);font-weight:600}
+.pw-msg{font-size:11px;min-height:14px;color:var(--green)}
+.pw-msg.err{color:var(--red)}
 @media print{.tabs,.arow,.toast-a,.wnav,.up-panel,.hdr-btns{display:none!important}.app{padding:8px;max-width:100%}}
 </style>
 </head>
 <body>
+<!-- 로그인 오버레이 -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-title">주간업무일지</div>
+    <div class="login-sub">범우건축_wjjang</div>
+    <input class="login-input" type="password" id="loginPw" placeholder="비밀번호" maxlength="20"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">입력</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- 비밀번호 변경 모달 -->
+<div class="pw-modal" id="pwModal">
+  <div class="pw-box">
+    <h3>비밀번호 변경</h3>
+    <input type="password" id="pwCur"  placeholder="현재 비밀번호" maxlength="20">
+    <input type="password" id="pwNew1" placeholder="새 비밀번호" maxlength="20">
+    <input type="password" id="pwNew2" placeholder="새 비밀번호 확인" maxlength="20">
+    <div class="pw-msg" id="pwMsg"></div>
+    <div class="pw-box-row">
+      <button onclick="closePwModal()">취소</button>
+      <button class="pr" onclick="changePw()">변경</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 <div class="copy-toast" id="copyToast"></div>
 
@@ -303,6 +352,7 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
     <label class="ab" style="font-size:11px;cursor:pointer;margin:0" title="JSON 파일로 데이터 복원">
       DB 불러오기<input type="file" accept=".json" onchange="importDB(this)" style="display:none">
     </label>
+    <button class="ab" onclick="openPwModal()" style="font-size:11px">비밀번호 변경</button>
     <button class="ab" onclick="window.print()" style="font-size:11px">인쇄</button>
   </div>
 </div>
@@ -658,6 +708,78 @@ function saveDB(db){
 }
 
 function loadWeek(k){return loadDB()[k]||null;}
+
+/* ═══════════════════════════════════
+   로그인 & 비밀번호 관리
+═══════════════════════════════════ */
+const PW_KEY = 'baumwoo_pw';
+const SESSION_KEY = 'baumwoo_session';
+
+function getSavedPw(){
+  return localStorage.getItem(PW_KEY) || '0000';
+}
+
+function doLogin(){
+  const input = document.getElementById('loginPw').value;
+  const err   = document.getElementById('loginErr');
+  if(input === getSavedPw()){
+    // 세션 저장 (탭 닫을 때까지 유지)
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('loginOverlay').style.display = 'none';
+    err.textContent = '';
+  } else {
+    err.textContent = '비밀번호가 올바르지 않습니다.';
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginPw').focus();
+  }
+}
+
+function checkSession(){
+  if(sessionStorage.getItem(SESSION_KEY) === '1'){
+    document.getElementById('loginOverlay').style.display = 'none';
+  } else {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    setTimeout(()=>document.getElementById('loginPw').focus(), 100);
+  }
+}
+
+function openPwModal(){
+  document.getElementById('pwCur').value  = '';
+  document.getElementById('pwNew1').value = '';
+  document.getElementById('pwNew2').value = '';
+  document.getElementById('pwMsg').textContent = '';
+  document.getElementById('pwMsg').className = 'pw-msg';
+  document.getElementById('pwModal').classList.add('open');
+  setTimeout(()=>document.getElementById('pwCur').focus(), 100);
+}
+
+function closePwModal(){
+  document.getElementById('pwModal').classList.remove('open');
+}
+
+function changePw(){
+  const cur  = document.getElementById('pwCur').value;
+  const new1 = document.getElementById('pwNew1').value;
+  const new2 = document.getElementById('pwNew2').value;
+  const msg  = document.getElementById('pwMsg');
+
+  if(cur !== getSavedPw()){
+    msg.textContent = '현재 비밀번호가 올바르지 않습니다.';
+    msg.className = 'pw-msg err'; return;
+  }
+  if(!new1){
+    msg.textContent = '새 비밀번호를 입력하세요.';
+    msg.className = 'pw-msg err'; return;
+  }
+  if(new1 !== new2){
+    msg.textContent = '새 비밀번호가 일치하지 않습니다.';
+    msg.className = 'pw-msg err'; return;
+  }
+  localStorage.setItem(PW_KEY, new1);
+  msg.textContent = '비밀번호가 변경되었습니다.';
+  msg.className = 'pw-msg';
+  setTimeout(()=>closePwModal(), 1200);
+}
 
 // 앱 시작 시 Firestore에서 DB 로드
 async function initDB(){
@@ -2197,6 +2319,7 @@ function goWeek(key){
    초기화
 ═══════════════════════════════════ */
 // DB 초기화 후 앱 시작
+checkSession();
 initDB().then(()=>{
   buildRows();
   renderTable();
