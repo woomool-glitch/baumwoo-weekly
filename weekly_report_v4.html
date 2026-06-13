@@ -1539,91 +1539,16 @@ function renderMonthly(){
   }
 
   // ── 주차별 상세 테이블 ──
-  _detailMode = 'week'; // 월 변경 시 주차 기준으로 초기화
-  const tbl=document.getElementById('mtbl');
+  _detailMode = 'week';
+  _detailArgs = {year, month, data, db}; // 캐시 저장
   if(!data.length){
-    tbl.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
+    document.getElementById('mtbl').innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
     document.getElementById('bar-wrap2').innerHTML='';
     renderMonthlySummary(year,month);
     renderTaskList(year,month,db);
     return;
   }
-
-  // ── 주차별 상세 + 소계 나열 ──
-  const DAYS3=['일','월','화','수','목','금','토'];
-  tbl.innerHTML=`<thead><tr>
-    <th>날짜</th><th>요일</th><th style="text-align:left;padding-left:12px">업무내용</th>
-    <th>출근</th><th>퇴근</th><th>업무시간</th><th>휴게</th>
-    <th style="color:var(--green)">식대</th>
-  </tr></thead>`;
-  const tbody=document.createElement('tbody');
-
-  data.forEach(sv=>{
-    const mon=new Date(sv.monday);
-    const sun=new Date(mon);sun.setDate(sun.getDate()+6);
-    const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
-
-    // 주차 헤더 행 (첫 주차 제외하고 상단 여백용 빈 행 추가)
-    if(tbody.children.length>0){
-      const spacer=document.createElement('tr');
-      spacer.innerHTML='<td colspan="8" style="height:16px;border:none;background:transparent"></td>';
-      tbody.appendChild(spacer);
-    }
-    const hdr=document.createElement('tr');
-    hdr.style.cssText='background:var(--bg2)';
-    hdr.innerHTML=`<td colspan="8" style="padding:8px 12px;font-weight:700;font-size:13px;text-align:left;border-top:2px solid var(--accent);border-left:3px solid var(--accent)">
-      ${sv.week}주차 &nbsp;<span style="font-size:11px;font-weight:400;color:var(--tx3)">${period}</span>
-    </td>`;
-    tbody.appendChild(hdr);
-
-    // 일별 행
-    let wkWork=0,wkRestMin=0,wkEveCnt=0,wkEveAmt=0,wkWkdCnt=0,wkWkdAmt=0;
-    (sv.days||[]).forEach((d,idx)=>{
-      if(d.extra) return;
-      const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
-      const dow=dd.getDay();
-      const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);
-      const meal=calcMeal(inM,outM,dow,d.holiday||false);
-      if(wm!=null) wkWork+=wm;
-      if(inM!=null&&outM!=null) wkRestMin+=restM;
-      if(meal.type==='eve'){wkEveCnt+=meal.count;wkEveAmt+=meal.amt;}
-      if(meal.type==='wkd'){wkWkdCnt+=meal.count;wkWkdAmt+=meal.amt;}
-
-      const noWork=d.inTime==='-'||(inM==null&&outM==null);
-      const tr=document.createElement('tr');
-      if(dow===6) tr.classList.add('sat');
-      else if(dow===0) tr.classList.add('sun');
-      const dateStr=`${dd.getMonth()+1}/${String(dd.getDate()).padStart(2,'0')}`;
-      const mealHtml=meal.count>0
-        ?`<span style="font-size:11px;font-weight:600;color:${meal.type==='eve'?'#A84800':'var(--purple)'}">${won(meal.amt)}</span>`
-        :'';
-      tr.innerHTML=`
-        <td style="font-weight:600">${dateStr}</td>
-        <td style="color:var(--tx2)">${DAYS3[dow]}</td>
-        <td style="text-align:left;padding-left:12px;white-space:normal;max-width:280px;word-break:break-all">${d.task||'<span style="color:var(--tx3)">—</span>'}</td>
-        <td>${noWork?'-':(d.inTime||'')}</td>
-        <td>${noWork?'-':(d.outTime||'')}</td>
-        <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td>
-        <td>${noWork?'-':(d.rest||0)+'h'}</td>
-        <td>${mealHtml}</td>`;
-      tbody.appendChild(tr);
-    });
-
-    // 주간 소계 행
-    const wkMealCnt=wkEveCnt+wkWkdCnt, wkMealAmt=wkEveAmt+wkWkdAmt;
-    const sub=document.createElement('tr');sub.className='sum-row';
-    sub.innerHTML=`
-      <td colspan="3" style="text-align:right;padding-right:12px;font-size:11px">${sv.week}주차 소계</td>
-      <td colspan="2"></td>
-      <td>${m2s(wkWork)}</td>
-      <td></td>
-      <td style="color:var(--green);font-weight:700">${wkMealCnt>0?`${wkMealCnt}회·${won(wkMealAmt)}`:'-'}</td>`;
-    tbody.appendChild(sub);
-  });
-
-  tbl.appendChild(tbody);
-  _detailArgs={year,month,data,db}; // 캐시 저장
+  renderDetailByWeek(data);
 
   // ── 세로형 바 차트 ──
   const maxW2=Math.max(...data.map(d=>d.totalWorkMin||0),1);
