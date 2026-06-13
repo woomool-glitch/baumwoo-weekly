@@ -1756,13 +1756,10 @@ function setDetailMode(mode){
       btnM.style.cssText='padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;background:var(--accent);color:#fff';
     }
   }
-  if(_detailArgs) renderDetailTable(_detailArgs.year, _detailArgs.month, _detailArgs.data, _detailArgs.db);
-}
-
-function renderDetailTable(year, month, data, db){
-  _detailArgs = {year, month, data, db};
-  if(_detailMode==='week') renderDetailByWeek(data);
-  else renderDetailByMonth(year, month, db);
+  // 캐시된 데이터로 재렌더
+  if(!_detailArgs) return;
+  if(mode==='week') renderDetailByWeek(_detailArgs.data);
+  else renderDetailByMonth(_detailArgs.year, _detailArgs.month, _detailArgs.db);
 }
 
 // ── 주차 기준 (기존 방식) ──
