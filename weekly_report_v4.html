@@ -851,10 +851,10 @@ function buildRows(){
   const sv=loadWeek(fmtKey(curMon));rows=[];
   for(let i=0;i<7;i++){
     const d=new Date(curMon);d.setDate(d.getDate()+i);
-    const def={date:d,task:'',inTime:'',outTime:'',rest:1,note:'',imp:false,holiday:false,extra:false};
+    const def={date:d,task:'',inTime:'',outTime:'',rest:1,note:'',imp:false,holiday:false,extra:false,manualRest:false};
     if(sv?.days?.[i]){
       const s=sv.days[i];
-      rows.push({...def,task:s.task||'',inTime:s.inTime||'',outTime:s.outTime||'',rest:s.rest??1,note:s.note||'',imp:s.imp||false,holiday:s.holiday||false});
+      rows.push({...def,task:s.task||'',inTime:s.inTime||'',outTime:s.outTime||'',rest:s.rest??1,note:s.note||'',imp:s.imp||false,holiday:s.holiday||false,manualRest:s.manualRest||false});
     }else rows.push(def);
   }
   // 일요일 아래 추가 3행 (날짜 없는 빈 행)
@@ -961,6 +961,7 @@ function bindInputs(){
         e.target.classList.remove('auto');
       }
       rows[i][f]=(f==='rest')?parseFloat(v)||0:v;
+      if(f==='rest') rows[i].manualRest=true;  // 수동 수정 표시
       updateRow(i);
       if(f==='task') autoResize(e.target);
     });
@@ -987,26 +988,41 @@ function bindInputs(){
 }
 
 function autoRest(i){
-  // 평일(월~금) + 비공휴일 + 퇴근 21시(1260분) 초과 → 휴게 2시간 자동
   const r=rows[i];
-  if(!r.date||r.extra) return;  // extra 빈행 제외
+  if(!r.date||r.extra) return;
   const dow=r.date.getDay();
   const isWeekday=dow>=1&&dow<=5;
-  if(!isWeekday||r.holiday) return;
+
+  // 출퇴근 없는 날('-') 또는 주말·공휴일 → 휴게 0
   const inM=parseTime(r.inTime), outM=parseTime(r.outTime);
-  if(inM==null||outM==null) return;
+  if(inM==null||outM==null){
+    if(r.imp){ r.rest=0; }  // 엑셀 불러오기로 '-' 된 날은 0
+    return;
+  }
+
+  // 주말·공휴일 출근 → 휴게시간 그대로 유지 (수동 입력)
+  if(!isWeekday||r.holiday) return;
+
   let actualOut=outM;
   if(isON(inM,outM)) actualOut+=1440; // 자정 넘김
-  if(actualOut>=1260 && r.rest<2){
-    r.rest=2;
-    // UI 반영
-    const restInp=document.querySelector(`#tbody input[data-i="${i}"][data-f="rest"]`);
-    if(restInp) restInp.value=2;
-  } else if(actualOut<1260 && r.rest===2){
-    // 21시 이전으로 수정 시 → 1시간으로 복원
-    r.rest=1;
-    const restInp=document.querySelector(`#tbody input[data-i="${i}"][data-f="rest"]`);
-    if(restInp) restInp.value=1;
+
+  // 수동으로 수정한 휴게시간은 자동 변경 안 함
+  if(r.manualRest) return;
+
+  // 평일 퇴근 21시 이상 → 휴게 2시간
+  if(actualOut>=1260){
+    if(r.rest<2){
+      r.rest=2;
+      const el=document.querySelector(`#tbody input[data-i="${i}"][data-f="rest"]`);
+      if(el) el.value=2;
+    }
+  } else {
+    // 평일 퇴근 21시 미만 → 휴게 기본 1시간
+    if(r.rest!==1){
+      r.rest=1;
+      const el=document.querySelector(`#tbody input[data-i="${i}"][data-f="rest"]`);
+      if(el) el.value=1;
+    }
   }
 }
 
@@ -1190,7 +1206,7 @@ function doImport(){
   // (이전에 저장된 값이 남아있는 문제 방지)
   rows.forEach(r=>{
     if(r.extra||!r.date) return;
-    r.inTime='-'; r.outTime='-'; r.rest=0; r.imp=true; r.holiday=false; r.note='';
+    r.inTime='-'; r.outTime='-'; r.rest=0; r.imp=true; r.holiday=false; r.note=''; r.manualRest=false;
   });
 
   // 매칭된 날짜 추적
@@ -1273,7 +1289,7 @@ function saveWeek(){
   });
   db[key]={
     monday:key,year:curMon.getFullYear(),month:curMon.getMonth()+1,week:wNum(curMon),
-    days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false})),
+    days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false,manualRest:r.manualRest||false})),
     special:document.getElementById('spNote').value,
     totalWorkMin:tw,
     meal:{eveCnt,eveAmt,wkdCnt,wkdAmt,totalCnt:eveCnt+wkdCnt,totalAmt:eveAmt+wkdAmt},
