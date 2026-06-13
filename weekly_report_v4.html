@@ -1554,10 +1554,15 @@ function renderMonthly(){
     const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
 
-    // 주차 헤더 행
+    // 주차 헤더 행 (첫 주차 제외하고 상단 여백용 빈 행 추가)
+    if(tbody.children.length>0){
+      const spacer=document.createElement('tr');
+      spacer.innerHTML='<td colspan="8" style="height:16px;border:none;background:transparent"></td>';
+      tbody.appendChild(spacer);
+    }
     const hdr=document.createElement('tr');
     hdr.style.cssText='background:var(--bg2)';
-    hdr.innerHTML=`<td colspan="8" style="padding:7px 10px;font-weight:700;font-size:12px;border-top:2px solid var(--bd2)">
+    hdr.innerHTML=`<td colspan="8" style="padding:8px 12px;font-weight:700;font-size:13px;text-align:left;border-top:2px solid var(--accent);border-left:3px solid var(--accent)">
       ${sv.week}주차 &nbsp;<span style="font-size:11px;font-weight:400;color:var(--tx3)">${period}</span>
     </td>`;
     tbody.appendChild(hdr);
