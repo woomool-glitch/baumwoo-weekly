@@ -956,7 +956,7 @@ function renderTable(){
       <td class="tc selectable" data-row="${i}" data-col="3" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp${r.imp?' auto':''}" id="in-${i}" value="${inDisp}" placeholder="09:00" maxlength="5" data-i="${i}" data-f="inTime" style="width:100%">`}</td>
       <td class="tc selectable" data-row="${i}" data-col="4" id="otd-${i}" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp${r.imp?' auto':''}" id="out-${i}" value="${outDisp}" placeholder="18:00" maxlength="5" data-i="${i}" data-f="outTime" style="width:calc(100% - ${ot?24:0}px)">${ot?'<span class="otbadge">익일</span>':''}`}</td>
       <td class="nc selectable" data-row="${i}" data-col="5" id="w-${i}" style="font-size:11px;text-align:center">${workDisp}</td>
-      <td class="selectable" data-row="${i}" data-col="6" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp" value="${r.rest}" data-i="${i}" data-f="rest" style="width:28px;text-align:right"><span style="font-size:11px;color:var(--tx2)">h</span>`}</td>
+      <td class="selectable" data-row="${i}" data-col="6" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp" value="${r.rest}" data-i="${i}" data-f="rest" style="width:28px;text-align:right"><span style="font-size:11px;color:var(--tx2)">시간</span>`}</td>
       <td class="selectable" data-row="${i}" data-col="7"><input class="inp" value="${esc(r.note)}" data-i="${i}" data-f="note" style="width:100%"></td>
       <td class="mc selectable" data-row="${i}" data-col="8" id="ml-${i}">${mealHtml}</td>
     `;
@@ -1734,7 +1734,7 @@ function renderDetailByWeek(data){
       tr.innerHTML=`<td style="font-weight:600">${dateStr}</td><td style="color:var(--tx2)">${DAYS3[dow]}</td>
         <td style="text-align:left;padding-left:12px;white-space:normal;max-width:280px;word-break:break-all">${d.task||'<span style="color:var(--tx3)">—</span>'}</td>
         <td>${noWork?'-':(d.inTime||'')}</td><td>${noWork?'-':(d.outTime||'')}</td>
-        <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'h'}</td><td>${mealHtml}</td>`;
+        <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'시간'}</td><td>${mealHtml}</td>`;
       tbody.appendChild(tr);
     });
     const wkMC=wkEveCnt+wkWkdCnt,wkMA=wkEveAmt+wkWkdAmt;
@@ -1799,7 +1799,7 @@ function renderDetailByMonth(year, month, db){
     tr.innerHTML=`<td style="font-weight:600">${dateStr}</td><td style="color:var(--tx2)">${DAYS3[dow]}</td>
       <td style="text-align:left;padding-left:12px;white-space:normal;max-width:280px;word-break:break-all">${d.task||'<span style="color:var(--tx3)">—</span>'}</td>
       <td>${noWork?'-':(d.inTime||'')}</td><td>${noWork?'-':(d.outTime||'')}</td>
-      <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'h'}</td><td>${mealHtml}</td>`;
+      <td>${wm!=null?m2s(wm):(noWork?'-':'')}</td><td>${noWork?'-':(d.rest||0)+'시간'}</td><td>${mealHtml}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -2199,7 +2199,7 @@ function importDB(input){
     // input (출근/퇴근/휴게)
     const inp=td.querySelector('input');
     if(inp){
-      // 휴게시간: input + 'h' → "1h" 형태
+      // 휴게시간: input + '시간' → "1시간" 형태
       const span=td.querySelector('span');
       return inp.value.trim()+(span?span.textContent.trim():'');
     }
