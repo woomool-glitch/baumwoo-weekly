@@ -619,7 +619,7 @@ let xlsHdrs = [];
    날짜 유틸
 ═══════════════════════════════════ */
 function getMonday(d){const dt=new Date(d);const day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));dt.setHours(0,0,0,0);return dt;}
-function fmtFull(d){return`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;}
+function fmtFull(d){return`${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;}
 function fmtDay(d){return String(d.getDate()).padStart(2,'0')+'일';}
 function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function wNum(d){return Math.ceil(d.getDate()/7);}
@@ -898,7 +898,7 @@ function renderHeader(){
   const sun=new Date(curMon);sun.setDate(sun.getDate()+6);
   document.getElementById('wlbl').textContent=`${curMon.getFullYear()}년 ${curMon.getMonth()+1}월 ${wNum(curMon)}주차`;
   document.getElementById('pbar-date').textContent=
-    `${fmtFull(curMon)} (월요일) ~ ${fmtFull(sun)} (일요일)`;
+    `${fmtFull(curMon)} 월요일 ~ ${fmtFull(sun)} 일요일`;
 }
 
 /* ═══════════════════════════════════
@@ -2314,6 +2314,11 @@ function importDB(input){
       const tdRect=td.getBoundingClientRect();
       const localX=e.clientX-tdRect.left;
       if(!(td.classList.contains('task-cell')&&localX<=10)){
+        // 입력 편집은 그대로 진행하되, 해당 셀을 단일 선택 상태로 등록
+        // (드래그는 시작하지 않음 → 텍스트 입력 커서 배치 방해 안 함)
+        anchorRow=endRow=parseInt(td.dataset.row);
+        anchorCol=endCol=parseInt(td.dataset.col);
+        highlightCells();
         return; // 입력 우선
       }
     }
@@ -2344,6 +2349,11 @@ function importDB(input){
   // Ctrl+C / Cmd+C 로 복사
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key==='c'){
+      // input/textarea 안에서 텍스트 일부를 직접 선택한 경우 → 브라우저 기본 복사에 양보
+      const ae=document.activeElement;
+      const isEditableSel=ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')
+        &&typeof ae.selectionStart==='number'&&ae.selectionStart!==ae.selectionEnd;
+      if(isEditableSel) return;
       // 선택된 셀이 있을 때만
       if(anchorRow>=0&&document.querySelector('#tbody td.sel,#tbody td.sel-anchor')){
         e.preventDefault();
