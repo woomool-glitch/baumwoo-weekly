@@ -134,7 +134,7 @@ table.rt tbody tr:hover td{background:var(--bg2)}
 table.rt td.task-cell{white-space:normal;overflow:visible;vertical-align:top;padding:4px 4px 4px 14px;position:relative}
 table.rt td.task-cell::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;cursor:cell;background:transparent}
 table.rt td.task-cell:hover::before{background:rgba(18,100,204,0.08)}
-col.cd{width:30px}col.cw{width:30px}col.ct{width:54px}col.co{width:70px}col.cr{width:55px}col.cn{width:68px}col.cm{width:76px}
+col.cd{width:30px}col.cw{width:30px}col.ct{width:54px}col.co{width:70px}col.cr{width:55px}col.cn{width:110px}col.cm{width:76px}
 .dc{text-align:center;font-weight:600;white-space:nowrap}
 .wc{text-align:center;font-size:12px;font-weight:500;color:var(--tx2);white-space:nowrap}
 .nc{text-align:center;white-space:nowrap}
@@ -2439,7 +2439,9 @@ function autoResize(el){
 }
 // 테이블 렌더 후 전체 textarea 높이 초기화
 function resizeAllTextareas(){
-  document.querySelectorAll('#tbody textarea.task-inp, #tbody textarea.note-inp').forEach(autoResize);
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#tbody textarea.task-inp, #tbody textarea.note-inp').forEach(autoResize);
+  });
 }
 
 /* ═══════════════════════════════════
