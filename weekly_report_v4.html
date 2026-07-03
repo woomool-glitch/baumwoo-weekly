@@ -151,6 +151,9 @@ tr.otr{background:var(--amber-bg)}
 .inp.auto{color:var(--blue-tx);font-weight:500}
 .task-inp{width:100%;border:none;background:transparent;font-size:12px;color:var(--tx);outline:none;padding:2px 4px;font-family:inherit;resize:none;overflow:hidden;min-height:22px;line-height:1.6;display:block}
 .task-inp:focus{background:var(--bg2)}
+table.rt td.note-cell{white-space:normal;overflow:visible;vertical-align:top;padding:4px 4px}
+.note-inp{width:100%;border:none;background:transparent;font-size:12px;color:var(--tx);outline:none;padding:2px 4px;font-family:inherit;resize:none;overflow:hidden;min-height:22px;line-height:1.6;display:block}
+.note-inp:focus{background:var(--bg2)}
 .sum-row td{background:var(--bg2);font-weight:700;font-size:13px;text-align:center;white-space:nowrap;padding:11px 5px;border-top:2px solid var(--bd2)}
 .otbadge{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;background:var(--amber-bg);color:var(--amber);border:1px solid rgba(125,90,0,.2);letter-spacing:0.02em}
 /* 주간 식대 합산바 */
@@ -920,7 +923,7 @@ function renderTable(){
         <td class="tc selectable" data-row="${i}" data-col="4" style="white-space:nowrap"></td>
         <td class="nc selectable" data-row="${i}" data-col="5" id="w-${i}" style="font-size:11px"></td>
         <td class="selectable" data-row="${i}" data-col="6" style="white-space:nowrap;text-align:center"></td>
-        <td class="selectable" data-row="${i}" data-col="7"><input class="inp" value="${esc(r.note)}" data-i="${i}" data-f="note" style="width:100%"></td>
+        <td class="note-cell selectable" data-row="${i}" data-col="7"><textarea class="note-inp" data-i="${i}" data-f="note" rows="1" onInput="autoResize(this)">${esc(r.note)}</textarea></td>
         <td class="mc selectable" data-row="${i}" data-col="8" id="ml-${i}"></td>
       `;
       tbody.appendChild(tr);
@@ -957,7 +960,7 @@ function renderTable(){
       <td class="tc selectable" data-row="${i}" data-col="4" id="otd-${i}" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp${r.imp?' auto':''}" id="out-${i}" value="${outDisp}" placeholder="18:00" maxlength="5" data-i="${i}" data-f="outTime" style="width:calc(100% - ${ot?24:0}px)">${ot?'<span class="otbadge">익일</span>':''}`}</td>
       <td class="nc selectable" data-row="${i}" data-col="5" id="w-${i}" style="font-size:11px;text-align:center">${workDisp}</td>
       <td class="selectable" data-row="${i}" data-col="6" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp" value="${r.rest}" data-i="${i}" data-f="rest" style="width:28px;text-align:right"><span style="font-size:11px;color:var(--tx2)">시간</span>`}</td>
-      <td class="selectable" data-row="${i}" data-col="7"><input class="inp" value="${esc(r.note)}" data-i="${i}" data-f="note" style="width:100%"></td>
+      <td class="note-cell selectable" data-row="${i}" data-col="7"><textarea class="note-inp" data-i="${i}" data-f="note" rows="1" onInput="autoResize(this)">${esc(r.note)}</textarea></td>
       <td class="mc selectable" data-row="${i}" data-col="8" id="ml-${i}">${mealHtml}</td>
     `;
     tbody.appendChild(tr);
@@ -985,7 +988,7 @@ function bindInputs(){
       rows[i][f]=(f==='rest')?parseFloat(v)||0:v;
       if(f==='rest') rows[i].manualRest=true;  // 수동 수정 표시
       updateRow(i);
-      if(f==='task') autoResize(e.target);
+      if(f==='task'||f==='note') autoResize(e.target);
     });
   });
 
@@ -996,11 +999,11 @@ function bindInputs(){
     const f=el.dataset.f;
     if(!NAV_FIELDS.includes(f)) return;
     el.addEventListener('keydown',e=>{
-      // task(textarea) 는 Enter → 아래 행 이동 (Shift+Enter 는 줄바꿈 허용)
-      // rest, note 는 Enter → 아래 행 이동
+      // task, note(textarea) 는 Enter → 아래 행 이동 (Shift+Enter 는 줄바꿈 허용)
+      // rest 는 Enter → 아래 행 이동
       const isEnter=e.key==='Enter';
       if(!isEnter) return;
-      if(f==='task'&&e.shiftKey) return; // Shift+Enter: 줄바꿈 그대로
+      if((f==='task'||f==='note')&&e.shiftKey) return; // Shift+Enter: 줄바꿈 그대로
       e.preventDefault();
       const i=parseInt(el.dataset.i);
       const next=document.querySelector(`#tbody [data-i="${i+1}"][data-f="${f}"]`);
@@ -2436,7 +2439,7 @@ function autoResize(el){
 }
 // 테이블 렌더 후 전체 textarea 높이 초기화
 function resizeAllTextareas(){
-  document.querySelectorAll('#tbody textarea.task-inp').forEach(autoResize);
+  document.querySelectorAll('#tbody textarea.task-inp, #tbody textarea.note-inp').forEach(autoResize);
 }
 
 /* ═══════════════════════════════════
