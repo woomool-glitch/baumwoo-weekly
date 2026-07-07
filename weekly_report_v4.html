@@ -1196,11 +1196,22 @@ function refreshPreview(){
   const outCol=document.getElementById('mOut').value;
   if(!dateCol||!inCol||!outCol||!xlsData.length)return;
   const mk=fmtKey(curMon);const sun=new Date(curMon);sun.setDate(sun.getDate()+6);const sk=fmtKey(sun);
-  const wkRows=xlsData.map(row=>{
+  const wkRowsRaw=xlsData.map(row=>{
     const d=parseDate(row[dateCol]);if(!d)return null;
     const k=fmtKey(d);if(k<mk||k>sk)return null;
     return{_key:k,_date:d,row};
   }).filter(Boolean).sort((a,b)=>a._key.localeCompare(b._key));
+
+  // 같은 날짜 중복 행 제거: 출퇴근 데이터가 있는 행 우선, 없으면 첫 번째만 유지
+  const seenKeys=new Map();
+  wkRowsRaw.forEach(wr=>{
+    const inM=parseTime(wr.row[inCol]);
+    const outM=parseTime(wr.row[outCol]);
+    const hasData=inM!=null||outM!=null;
+    if(!seenKeys.has(wr._key)){seenKeys.set(wr._key,{wr,hasData});}
+    else if(hasData&&!seenKeys.get(wr._key).hasData){seenKeys.set(wr._key,{wr,hasData});}
+  });
+  const wkRows=[...seenKeys.values()].map(v=>v.wr).sort((a,b)=>a._key.localeCompare(b._key));
   const hint=document.getElementById('preHint');
   const wrap=document.getElementById('preWrap');
   if(!wkRows.length){
