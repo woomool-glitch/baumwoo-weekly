@@ -705,6 +705,18 @@ function parseDate(v){
     return null;
   }
   const s=String(v).trim();if(!s)return null;
+  // M/D일(요일) 형식 — 예: "6/29일(월)", "7/1일(수)" → 월/일 명시된 경우 정확한 날짜 반환
+  const mSlash=s.match(/^(\d{1,2})\/(\d{1,2})일/);
+  if(mSlash){
+    const mon=parseInt(mSlash[1])-1,day=parseInt(mSlash[2]),y=curMon.getFullYear();
+    const d=new Date(y,mon,day);if(d.getDate()===day)return d;return null;
+  }
+  // M월D일 형식 — 예: "6월29일"
+  const mKor=s.match(/^(\d{1,2})월\s*(\d{1,2})일/);
+  if(mKor){
+    const mon=parseInt(mKor[1])-1,day=parseInt(mKor[2]),y=curMon.getFullYear();
+    const d=new Date(y,mon,day);if(d.getDate()===day)return d;return null;
+  }
   const mDay=s.match(/^(\d{1,2})일/);if(mDay)return dayOnlyToDate(parseInt(mDay[1]));
   if(/^\d{1,2}$/.test(s)){const d=parseInt(s);if(d>=1&&d<=31)return dayOnlyToDate(d);}
   let norm=s.replace(/\./g,'-').replace(/\//g,'-');
@@ -1237,6 +1249,7 @@ function doImport(){
 
   // 매칭된 날짜 추적
   const matchedKeys=new Set();
+  const matchedWithData=new Set(); // 실제 출퇴근/부재 데이터가 적용된 날짜
 
   xlsData.forEach(row=>{
     const d=parseDate(row[dateCol]);if(!d)return;
@@ -1248,6 +1261,10 @@ function doImport(){
     const isHol=isHolidayNote(absVal);
     const dow=rows[idx].date.getDay();
     const isWeekend=(dow===0||dow===6);
+
+    // 이미 실제 데이터가 적용된 날짜인데, 새 행이 완전히 비어있다면 덮어쓰지 않음
+    const isEmpty=(inM==null&&outM==null&&!isHol&&!(absVal&&String(absVal).trim()));
+    if(isEmpty&&matchedWithData.has(k))return;
 
     matchedKeys.add(k);
 
@@ -1266,12 +1283,14 @@ function doImport(){
       rows[idx].imp=true;
       rows[idx].holiday=isHol;
       if(absVal&&String(absVal).trim()) rows[idx].note=String(absVal).trim();
+      matchedWithData.add(k); // 실제 출퇴근 데이터 적용된 날짜 기록
       matched++;
     }else if(isHol){
       rows[idx].holiday=true;
       rows[idx].rest=0;
       rows[idx].imp=true;
       if(absVal&&String(absVal).trim()) rows[idx].note=String(absVal).trim();
+      matchedWithData.add(k); // 공휴일 정보 적용된 날짜 기록
     }
   });
 
