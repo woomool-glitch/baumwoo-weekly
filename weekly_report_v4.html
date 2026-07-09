@@ -100,6 +100,15 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',-apple-sys
 
 /* ── 업로드 패널 ── */
 .up-panel{border:1px dashed var(--bd2);margin-bottom:14px;overflow:hidden}
+/* 기안 제목 자동생성 바 */
+.doc-title-bar{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 14px;background:var(--bg2);border:1px solid var(--bd);border-radius:4px}
+.doc-title-label{font-size:11px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
+.doc-title-text{font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap}
+.doc-title-sep{font-size:13px;font-weight:700;color:var(--tx);opacity:.5}
+.doc-title-name{border:none;border-bottom:1.5px solid var(--bd2);background:transparent;font-size:13px;font-weight:700;color:var(--accent);outline:none;width:80px;padding:0 2px;font-family:inherit}
+.doc-title-name:focus{border-bottom-color:var(--blue)}
+.doc-title-copy{margin-left:auto;background:var(--accent);color:#fff;border:none;padding:4px 14px;border-radius:3px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;flex-shrink:0}
+.doc-title-copy:hover{opacity:.82}
 .up-top{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;background:var(--bg2)}
 .up-label{font-size:11px;font-weight:600;flex-shrink:0;letter-spacing:0.04em;text-transform:uppercase;color:var(--tx2)}
 .up-btn{background:var(--bg);border:1px solid var(--bd2);padding:5px 12px;cursor:pointer;font-size:11px;font-weight:500;color:var(--tx);font-family:inherit;white-space:nowrap;transition:background .12s}
@@ -263,8 +272,9 @@ table.mtbl .sum-row td{background:var(--bg2);font-weight:700;border-top:2px soli
 label.ab{display:inline-flex;align-items:center}
 /* ── 셀 선택 & 드래그 ── */
 table.rt td.selectable{cursor:cell;user-select:none}
-table.rt td.sel{background:rgba(26,106,191,0.13)!important;outline:1px solid rgba(26,106,191,0.5)}
-table.rt td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px solid var(--blue)}
+table.rt td.sel{background:rgba(26,106,191,0.13)!important;box-shadow:inset 0 0 0 1px rgba(26,106,191,0.5)}
+table.rt td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:inset 0 0 0 2px var(--blue)}
+
 .copy-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--tx);color:var(--bg);font-size:12px;padding:8px 20px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:9999}
 .copy-toast.show{opacity:1}
 /* ── 투명 구분표 (드래그로만 인식) ── */
@@ -272,8 +282,8 @@ table.ghost{width:100%;border-collapse:collapse;margin-bottom:0}
 table.ghost td{border:0.5px solid transparent;padding:5px 8px;vertical-align:middle;font-size:13px;font-weight:700;color:var(--tx);background:var(--bg2);cursor:cell;user-select:none}
 table.ghost td.selectable:hover{border-color:rgba(26,106,191,0.15)}
 #pbar-date:hover{background:var(--blue-bg);outline:1px dashed var(--blue)}
-table.ghost td.sel{background:rgba(26,106,191,0.13)!important;outline:1px solid rgba(26,106,191,0.5)}
-table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px solid var(--blue)}
+table.ghost td.sel{background:rgba(26,106,191,0.13)!important;box-shadow:inset 0 0 0 1px rgba(26,106,191,0.5)}
+table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:inset 0 0 0 2px var(--blue)}
 .ot-amt{color:var(--red);font-weight:600}
 .ot-none{color:var(--tx3)}
 /* ── 월별 상단 레이아웃 ── */
@@ -334,7 +344,7 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
 .task-day.sun .task-day-date,.task-day.sun .task-day-dow{color:var(--red)}
 .task-day.holiday .task-day-date{color:var(--red)}
 .task-empty{padding:20px;text-align:center;color:var(--tx3);font-size:12px}
-@media print{.tabs,.arow,.toast-a,.wnav,.up-panel,.hdr-btns{display:none!important}.app{padding:8px;max-width:100%}}
+@media print{.tabs,.arow,.toast-a,.wnav,.up-panel,.hdr-btns,.doc-title-bar{display:none!important}.app{padding:8px;max-width:100%}}
 </style>
 </head>
 <body>
@@ -435,6 +445,16 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;outline:2px
         <span id="impResult"></span>
       </div>
     </div>
+  </div>
+
+  <!-- 기안 제목 자동생성 -->
+  <div class="doc-title-bar" id="docTitleBar">
+    <span class="doc-title-label">기안 제목</span>
+    <span class="doc-title-text" id="docTitleText"></span>
+    <span class="doc-title-sep">_</span>
+    <input class="doc-title-name" id="docTitleName" placeholder="이름 입력" maxlength="10"
+      oninput="saveDocName(this.value)" title="이름을 입력하면 자동 저장됩니다">
+    <button class="doc-title-copy" onclick="copyDocTitle()" title="클립보드에 복사">복사</button>
   </div>
 
   <table class="ghost" id="pbar" style="table-layout:fixed">
@@ -914,6 +934,29 @@ function renderHeader(){
   document.getElementById('wlbl').textContent=`${curMon.getFullYear()}년 ${curMon.getMonth()+1}월 ${wNum(curMon)}주차`;
   document.getElementById('pbar-date').textContent=
     `${fmtFull(curMon)} 월요일 ~ ${fmtFull(sun)} 일요일`;
+  updateDocTitle();
+}
+function updateDocTitle(){
+  const y=String(curMon.getFullYear()).slice(2);
+  const m=curMon.getMonth()+1;
+  const w=wNum(curMon);
+  document.getElementById('docTitleText').textContent=`${y}년 ${m}월 ${w}주차 주간업무일지`;
+}
+function saveDocName(v){
+  localStorage.setItem('docUserName', v.trim());
+}
+function copyDocTitle(){
+  const title=document.getElementById('docTitleText').textContent;
+  const name=document.getElementById('docTitleName').value.trim();
+  const full=name?title+'_'+name:title;
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(full).then(()=>showToast('제목 복사됨'));
+  }else{
+    const ta=document.createElement('textarea');ta.value=full;
+    ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);
+    ta.select();try{document.execCommand('copy');showToast('제목 복사됨');}catch(e){}
+    document.body.removeChild(ta);
+  }
 }
 
 /* ═══════════════════════════════════
@@ -2389,7 +2432,7 @@ function importDB(input){
         &&typeof ae.selectionStart==='number'&&ae.selectionStart!==ae.selectionEnd;
       if(isEditableSel) return;
       // 선택된 셀이 있을 때만
-      if(anchorRow>=0&&document.querySelector('#tbody td.sel,#tbody td.sel-anchor')){
+      if(anchorRow>=0&&document.querySelector('td.sel,td.sel-anchor')){
         e.preventDefault();
         copySelected();
       }
@@ -2584,6 +2627,9 @@ function goWeek(key){
 // DB 초기화 후 앱 시작
 checkSession();
 initDB().then(()=>{
+  // 저장된 이름 복원
+  const savedName=localStorage.getItem('docUserName');
+  if(savedName){const el=document.getElementById('docTitleName');if(el)el.value=savedName;}
   buildRows();
   renderTable();
 });
