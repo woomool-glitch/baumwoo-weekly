@@ -362,9 +362,11 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
     <div class="login-title">주간업무일지</div>
     <div class="login-sub">범우건축_wjjang</div>
     <input class="login-input" type="password" id="loginPw" placeholder="비밀번호" maxlength="20"
+      autocomplete="current-password" autocorrect="off" autocapitalize="none" spellcheck="false"
       onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">입력</button>
     <div class="login-err" id="loginErr"></div>
+    <div style="font-size:10px;color:#aaa;margin-top:6px;text-align:center">초기 비밀번호: 0000</div>
   </div>
 </div>
 
@@ -806,7 +808,7 @@ function getSavedPw(){
 let _isLoggedIn = false;
 
 function doLogin(){
-  const input = document.getElementById('loginPw').value;
+  const input = document.getElementById('loginPw').value.trim(); // 모바일 공백 제거
   const err   = document.getElementById('loginErr');
   if(input === getSavedPw()){
     _isLoggedIn = true;
@@ -1642,22 +1644,29 @@ function renderMonthly(){
 
   // ── 가로형 막대 차트 (근무+휴게 스택) ──
   {
-    const maxTotal=Math.max(...data.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
+    // totalRestMin 이 없는 구버전 데이터는 days 배열에서 직접 계산
+    const enriched=data.map(d=>{
+      if(d.totalRestMin!=null) return d;
+      let rm=0;
+      (d.days||[]).forEach(day=>{
+        if(day.extra) return;
+        const inM=parseTime(day.inTime),outM=parseTime(day.outTime);
+        if(inM!=null&&outM!=null) rm+=Math.round((day.rest||0)*60);
+      });
+      return{...d,totalRestMin:rm};
+    });
+    const maxTotal=Math.max(...enriched.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
     const el=document.getElementById('bar-wrap2');
     if(el){
-      // 범례
       const legend='<div class="bar-legend">'
         +'<span class="leg-work">근무시간</span>'
         +'<span class="leg-rest">휴게시간</span>'
         +'</div>';
-      const bars=data.map(d=>{
+      const bars=enriched.map(d=>{
         const wm=d.totalWorkMin||0;
         const rm=d.totalRestMin||0;
-        const total=wm+rm;
         const wPct=Math.round((wm/maxTotal)*100);
         const rPct=Math.round((rm/maxTotal)*100);
-        const totalStr=m2s(total);
-        const restStr=rm>0?m2s(rm):'';
         return '<div class="wrow">'
           +'<span class="wlbl">'+d.week+'주차</span>'
           +'<div class="wtrack">'
@@ -1666,7 +1675,7 @@ function renderMonthly(){
           +'</div>'
           +'<div class="wval">'
           +'<span class="wval-total">'+m2s(wm)+'</span>'
-          +(rm>0?'<span class="wval-sub">+'+restStr+'</span>':'')
+          +(rm>0?'<span class="wval-sub">+'+m2s(rm)+'</span>':'')
           +'</div>'
           +'</div>';
       }).join('');
