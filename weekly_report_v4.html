@@ -319,6 +319,43 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
 .bwrap2 .bar-legend .leg-work::before{background:linear-gradient(90deg,#378ADD,#5fb8ef)}
 .bwrap2 .bar-legend .leg-rest::before{background:linear-gradient(90deg,#f5c842,#ffe066)}
 @media(max-width:520px){.monthly-top{flex-direction:column}.total-time-card{width:100%}}
+
+/* ── 모바일 반응형 ── */
+@media(max-width:700px){
+  .app{padding:10px 8px 60px}
+  /* 헤더 */
+  .hdr{flex-wrap:wrap;gap:4px}
+  .hdr-title{font-size:14px}
+  .hdr-btns{gap:3px;flex-wrap:wrap}
+  .ab{font-size:10px;padding:4px 7px}
+  /* 주간 네비 */
+  .wnav{flex-wrap:wrap;gap:6px}
+  /* 기안 제목 바 */
+  .doc-title-bar{flex-wrap:wrap;gap:6px}
+  .doc-title-text{font-size:12px}
+  .doc-title-copy{padding:4px 10px}
+  /* 업무 테이블 - 업무시간합계·휴게·식대 컬럼 숨김 */
+  table.rt col.co,table.rt col.cr,table.rt col.cm{visibility:collapse}
+  table.rt thead tr th:nth-child(6),
+  table.rt thead tr th:nth-child(7),
+  table.rt thead tr th:nth-child(9){display:none}
+  table.rt tbody tr td[data-col="5"],
+  table.rt tbody tr td[data-col="6"],
+  table.rt tbody tr td[data-col="8"]{display:none}
+  table.rt tfoot #tot-w,table.rt tfoot #tot-r,table.rt tfoot #tot-m{display:none}
+  table.rt tfoot tr td:first-child{colspan:4}
+  /* 업무내용 열 좁히기 */
+  table.rt col:nth-child(3){width:auto!important;min-width:80px!important}
+  /* 바차트 */
+  .bwrap2 .wtrack{flex:0 0 55%}
+  .bwrap2 .wval{font-size:10px}
+  /* 통계 탭 상단 카드 */
+  .monthly-top{flex-direction:column}
+  .total-time-card{width:100%}
+  /* 탭 버튼 */
+  .tabs{gap:4px}
+  .tab{font-size:12px;padding:8px 12px}
+}
 /* ── 로그인 화면 ── */
 .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
 .login-box{width:320px;padding:40px 36px;background:var(--bg);border:1px solid var(--bd2);display:flex;flex-direction:column;gap:18px}
@@ -1655,14 +1692,20 @@ function renderMonthly(){
       });
       return{...d,totalRestMin:rm};
     });
-    const maxTotal=Math.max(...enriched.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
+    // 항상 1~5주차 고정 슬롯 생성 (데이터 없는 주도 빈 행 표시)
+    const slots=Array.from({length:5},(_,i)=>{
+      const w=i+1;
+      const found=enriched.find(d=>d.week===w);
+      return found||{week:w,totalWorkMin:0,totalRestMin:0,empty:true};
+    });
+    const maxTotal=Math.max(...slots.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
     const el=document.getElementById('bar-wrap2');
     if(el){
       const legend='<div class="bar-legend">'
         +'<span class="leg-work">근무시간</span>'
         +'<span class="leg-rest">휴게시간</span>'
         +'</div>';
-      const bars=enriched.map(d=>{
+      const bars=slots.map(d=>{
         const wm=d.totalWorkMin||0;
         const rm=d.totalRestMin||0;
         const wPct=Math.round((wm/maxTotal)*100);
@@ -1670,11 +1713,11 @@ function renderMonthly(){
         return '<div class="wrow">'
           +'<span class="wlbl">'+d.week+'주차</span>'
           +'<div class="wtrack">'
-          +'<div class="wbar" style="width:'+wPct+'%"></div>'
+          +(wm>0?'<div class="wbar" style="width:'+wPct+'%"></div>':'')
           +(rm>0?'<div class="wbar-rest" style="width:'+rPct+'%"></div>':'')
           +'</div>'
           +'<div class="wval">'
-          +'<span class="wval-total">'+m2s(wm)+'</span>'
+          +(wm>0?'<span class="wval-total">'+m2s(wm)+'</span>':'<span class="wval-total" style="color:var(--tx3)">—</span>')
           +(rm>0?'<span class="wval-sub">+'+m2s(rm)+'</span>':'')
           +'</div>'
           +'</div>';
