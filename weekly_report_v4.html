@@ -305,11 +305,19 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
 .hbar-wrap{flex:1;min-width:0;padding:2px 0}
 .hbar-title{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:10px;letter-spacing:0.01em}
 .bwrap2{display:flex;flex-direction:column;gap:8px}
-.bwrap2 .wrow{display:flex;align-items:center;gap:0}
-.bwrap2 .wlbl{font-size:12px;font-weight:700;color:var(--tx);width:46px;text-align:left;flex-shrink:0;padding-right:10px}
-.bwrap2 .wtrack{position:relative;height:20px;background:var(--bg2);flex:0 0 62%;overflow:hidden}
-.bwrap2 .wbar{height:100%;background:linear-gradient(90deg,#378ADD,#5fb8ef);transition:width .45s ease}
-.bwrap2 .wval{font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;padding-left:10px;flex:1}
+.bwrap2 .wrow{display:flex;align-items:center;gap:0;margin-bottom:2px}
+.bwrap2 .wlbl{font-size:12px;font-weight:700;color:var(--tx);width:40px;text-align:left;flex-shrink:0;padding-right:6px}
+.bwrap2 .wtrack{position:relative;height:20px;background:var(--bg2);flex:0 0 62%;overflow:hidden;display:flex}
+.bwrap2 .wbar{height:100%;background:linear-gradient(90deg,#378ADD,#5fb8ef);transition:width .45s ease;flex-shrink:0}
+.bwrap2 .wbar-rest{height:100%;background:linear-gradient(90deg,#5bbfad,#7dd6c8);transition:width .45s ease;flex-shrink:0}
+.bwrap2 .wval{font-size:11px;font-weight:700;color:var(--tx);white-space:nowrap;padding-left:8px;flex:1;display:flex;flex-direction:column;gap:0}
+.bwrap2 .wval-total{font-size:11px;font-weight:700;color:var(--tx)}
+.bwrap2 .wval-sub{font-size:10px;color:var(--tx2)}
+.bwrap2 .bar-legend{display:flex;gap:12px;font-size:11px;color:var(--tx2);margin-bottom:8px;padding-left:46px}
+.bwrap2 .bar-legend span{display:flex;align-items:center;gap:4px}
+.bwrap2 .bar-legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:2px}
+.bwrap2 .bar-legend .leg-work::before{background:linear-gradient(90deg,#378ADD,#5fb8ef)}
+.bwrap2 .bar-legend .leg-rest::before{background:linear-gradient(90deg,#5bbfad,#7dd6c8)}
 @media(max-width:520px){.monthly-top{flex-direction:column}.total-time-card{width:100%}}
 /* ── 로그인 화면 ── */
 .login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -1295,10 +1303,13 @@ function doImport(){
   let matched=0;
 
   // ── 불러오기 전 이번 주 7일 출퇴근 전체 초기화 ──
-  // (이전에 저장된 값이 남아있는 문제 방지)
+  // 출퇴근·imp·holiday만 초기화, 비고(note)·휴게(rest)는 수동 입력 보존
   rows.forEach(r=>{
     if(r.extra||!r.date) return;
-    r.inTime='-'; r.outTime='-'; r.rest=0; r.imp=true; r.holiday=false; r.note=''; r.manualRest=false;
+    r.inTime='-'; r.outTime='-'; r.imp=true; r.holiday=false;
+    // 수동 휴게시간이 아닌 경우만 리셋
+    if(!r.manualRest){ r.rest=0; }
+    // note는 리셋 안 함 (유저가 직접 입력한 내용 보존)
   });
 
   // 매칭된 날짜 추적
@@ -1325,38 +1336,40 @@ function doImport(){
     if(inM==null && outM==null && !isHol){
       rows[idx].inTime='-';
       rows[idx].outTime='-';
-      rows[idx].rest=0;
+      if(!rows[idx].manualRest) rows[idx].rest=0;
       rows[idx].imp=true;
       rows[idx].holiday=isHol;
-      if(absVal&&String(absVal).trim()) rows[idx].note=String(absVal).trim();
+      // 비고: 엑셀 부재 사유가 있고 유저가 직접 쓴 내용이 없을 때만 채움
+      if(absVal&&String(absVal).trim()&&!rows[idx].note) rows[idx].note=String(absVal).trim();
       matched++;
     }else if(inM!=null||outM!=null){
       rows[idx].inTime=inM!=null?m2hhmm(inM):'';
       rows[idx].outTime=outM!=null?m2hhmm(outM):'';
-      if(isWeekend||isHol) rows[idx].rest=rows[idx].rest||1;
+      if(isWeekend||isHol){ if(!rows[idx].manualRest) rows[idx].rest=rows[idx].rest||1; }
       rows[idx].imp=true;
       rows[idx].holiday=isHol;
-      if(absVal&&String(absVal).trim()) rows[idx].note=String(absVal).trim();
-      matchedWithData.add(k); // 실제 출퇴근 데이터 적용된 날짜 기록
+      if(absVal&&String(absVal).trim()&&!rows[idx].note) rows[idx].note=String(absVal).trim();
+      matchedWithData.add(k);
       matched++;
     }else if(isHol){
       rows[idx].holiday=true;
-      rows[idx].rest=0;
+      if(!rows[idx].manualRest) rows[idx].rest=0;
       rows[idx].imp=true;
-      if(absVal&&String(absVal).trim()) rows[idx].note=String(absVal).trim();
-      matchedWithData.add(k); // 공휴일 정보 적용된 날짜 기록
+      if(absVal&&String(absVal).trim()&&!rows[idx].note) rows[idx].note=String(absVal).trim();
+      matchedWithData.add(k);
     }
   });
 
   // 엑셀에 아예 없는 날짜(행 자체가 없는 경우)도 - 로 표시 (extra 빈행 제외)
   rows.forEach(r=>{
-    if(r.extra||!r.date) return;  // 아래 3개 빈행은 건드리지 않음
+    if(r.extra||!r.date) return;
     const k=fmtKey(r.date);
     if(!matchedKeys.has(k)){
       r.inTime='-';
       r.outTime='-';
-      r.rest=0;
+      if(!r.manualRest) r.rest=0;
       r.imp=true;
+      // note는 유지
     }
   });
 
@@ -1377,11 +1390,11 @@ function setResult(msg,type){
 ═══════════════════════════════════ */
 function saveWeek(){
   const db=loadDB();const key=fmtKey(curMon);
-  let tw=0,eveCnt=0,eveAmt=0,wkdCnt=0,wkdAmt=0;
+  let tw=0,tr=0,eveCnt=0,eveAmt=0,wkdCnt=0,wkdAmt=0;
   rows.forEach(r=>{
     if(r.extra) return;
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);if(wm!=null)tw+=wm;
+    const wm=calcWork(inM,outM,restM);if(wm!=null){tw+=wm;if(inM!=null&&outM!=null)tr+=restM;}
     const meal=calcMeal(inM,outM,r.date.getDay(),r.holiday);
     if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
@@ -1390,7 +1403,7 @@ function saveWeek(){
     monday:key,year:curMon.getFullYear(),month:curMon.getMonth()+1,week:wNum(curMon),
     days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false,manualRest:r.manualRest||false})),
     special:document.getElementById('spNote').value,
-    totalWorkMin:tw,
+    totalWorkMin:tw,totalRestMin:tr,
     meal:{eveCnt,eveAmt,wkdCnt,wkdAmt,totalCnt:eveCnt+wkdCnt,totalAmt:eveAmt+wkdAmt},
     savedAt:new Date().toISOString()
   };
@@ -1627,25 +1640,37 @@ function renderMonthly(){
   }
   renderDetailByWeek(data);
 
-  // ── 세로형 바 차트 ──
-  const maxW2=Math.max(...data.map(d=>d.totalWorkMin||0),1);
-  // ── 가로형 막대 차트 (세련된 버전) ──
+  // ── 가로형 막대 차트 (근무+휴게 스택) ──
   {
-    const maxW2=Math.max(...data.map(d=>d.totalWorkMin||0),1);
+    const maxTotal=Math.max(...data.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
     const el=document.getElementById('bar-wrap2');
     if(el){
-      el.innerHTML=data.map(d=>{
-        // 전체 폭 대비 2/3 길이로 스케일
-        const pct=Math.round(((d.totalWorkMin||0)/maxW2)*100);
+      // 범례
+      const legend='<div class="bar-legend">'
+        +'<span class="leg-work">근무시간</span>'
+        +'<span class="leg-rest">휴게시간</span>'
+        +'</div>';
+      const bars=data.map(d=>{
         const wm=d.totalWorkMin||0;
-        const hh=Math.floor(wm/60),mm2=wm%60;
-        const valStr=hh+'시간'+(mm2>0?' '+mm2+'분':'');
+        const rm=d.totalRestMin||0;
+        const total=wm+rm;
+        const wPct=Math.round((wm/maxTotal)*100);
+        const rPct=Math.round((rm/maxTotal)*100);
+        const totalStr=m2s(total);
+        const restStr=rm>0?m2s(rm):'';
         return '<div class="wrow">'
           +'<span class="wlbl">'+d.week+'주차</span>'
-          +'<div class="wtrack"><div class="wbar" style="width:'+pct+'%"></div></div>'
-          +'<span class="wval">'+valStr+'</span>'
+          +'<div class="wtrack">'
+          +'<div class="wbar" style="width:'+wPct+'%"></div>'
+          +(rm>0?'<div class="wbar-rest" style="width:'+rPct+'%"></div>':'')
+          +'</div>'
+          +'<div class="wval">'
+          +'<span class="wval-total">'+m2s(wm)+'</span>'
+          +(rm>0?'<span class="wval-sub">+'+restStr+'</span>':'')
+          +'</div>'
           +'</div>';
       }).join('');
+      el.innerHTML=legend+bars;
     }
   }
 
