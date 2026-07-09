@@ -304,13 +304,13 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
 /* 막대 그래프 영역 */
 .hbar-wrap{flex:1;min-width:0;padding:2px 0}
 .hbar-title{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:10px;letter-spacing:0.01em}
-.bwrap2{display:flex;flex-direction:column;gap:8px}
-.bwrap2 .wrow{display:flex;align-items:center;gap:0;margin-bottom:2px}
+.bwrap2{display:flex;flex-direction:column;gap:6px}
+.bwrap2 .wrow{display:flex;align-items:center;gap:0;height:26px}
 .bwrap2 .wlbl{font-size:12px;font-weight:700;color:var(--tx);width:34px;text-align:left;flex-shrink:0;padding-right:4px}
-.bwrap2 .wtrack{position:relative;height:20px;background:var(--bg2);flex:0 0 72%;overflow:hidden;display:flex}
+.bwrap2 .wtrack{position:relative;height:20px;min-height:20px;background:var(--bg2);flex:0 0 72%;overflow:hidden;display:flex;border-radius:2px}
 .bwrap2 .wbar{height:100%;background:linear-gradient(90deg,#378ADD,#5fb8ef);transition:width .45s ease;flex-shrink:0}
 .bwrap2 .wbar-rest{height:100%;background:linear-gradient(90deg,#f5c842,#ffe066);transition:width .45s ease;flex-shrink:0}
-.bwrap2 .wval{font-size:11px;font-weight:700;color:var(--tx);white-space:nowrap;padding-left:8px;flex:1;display:flex;flex-direction:column;gap:0}
+.bwrap2 .wval{font-size:11px;font-weight:700;color:var(--tx);white-space:nowrap;padding-left:8px;flex:1;line-height:1}
 .bwrap2 .wval-total{font-size:11px;font-weight:700;color:var(--tx)}
 .bwrap2 .wval-sub{font-size:10px;color:var(--tx2)}
 .bwrap2 .bar-legend{display:flex;gap:12px;font-size:11px;color:var(--tx2);margin-bottom:8px;padding-left:38px;justify-content:flex-end}
@@ -334,18 +334,13 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
   .doc-title-bar{flex-wrap:wrap;gap:6px}
   .doc-title-text{font-size:12px}
   .doc-title-copy{padding:4px 10px}
-  /* 업무 테이블 - 업무시간합계·휴게·식대 컬럼 숨김 */
-  table.rt col.co,table.rt col.cr,table.rt col.cm{visibility:collapse}
-  table.rt thead tr th:nth-child(6),
-  table.rt thead tr th:nth-child(7),
-  table.rt thead tr th:nth-child(9){display:none}
-  table.rt tbody tr td[data-col="5"],
-  table.rt tbody tr td[data-col="6"],
-  table.rt tbody tr td[data-col="8"]{display:none}
-  table.rt tfoot #tot-w,table.rt tfoot #tot-r,table.rt tfoot #tot-m{display:none}
-  table.rt tfoot tr td:first-child{colspan:4}
-  /* 업무내용 열 좁히기 */
-  table.rt col:nth-child(3){width:auto!important;min-width:80px!important}
+  /* 업무 테이블 - 가로 스크롤 (컬럼 숨기지 않음) */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.rt{font-size:11px;min-width:600px}
+  table.rt th,table.rt td{padding:2px 2px}
+  table.rt col:nth-child(3){width:140px!important;min-width:140px!important}
+  table.rt col.cn{width:70px!important}
+  .task-inp,.note-inp{font-size:11px}
   /* 바차트 */
   .bwrap2 .wtrack{flex:0 0 55%}
   .bwrap2 .wval{font-size:10px}
@@ -1667,21 +1662,8 @@ function renderMonthly(){
     }
   }
 
-  // ── 주차별 상세 테이블 ──
-  _detailMode = 'week';
-  _detailArgs = {year, month, data, db}; // 캐시 저장
-  if(!data.length){
-    document.getElementById('mtbl').innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
-    document.getElementById('bar-wrap2').innerHTML='';
-    renderMonthlySummary(year,month);
-    renderTaskList(year,month,db);
-    return;
-  }
-  renderDetailByWeek(data);
-
-  // ── 가로형 막대 차트 (근무+휴게 스택) ──
+  // ── 가로형 막대 차트 (근무+휴게 스택) - data 유무 관계없이 항상 5주차 표시 ──
   {
-    // totalRestMin 이 없는 구버전 데이터는 days 배열에서 직접 계산
     const enriched=data.map(d=>{
       if(d.totalRestMin!=null) return d;
       let rm=0;
@@ -1692,10 +1674,9 @@ function renderMonthly(){
       });
       return{...d,totalRestMin:rm};
     });
-    // 항상 1~5주차 고정 슬롯 생성 (데이터 없는 주도 빈 행 표시)
     const slots=Array.from({length:5},(_,i)=>{
       const w=i+1;
-      const found=enriched.find(d=>d.week===w);
+      const found=enriched.find(d=>Number(d.week)===w);
       return found||{week:w,totalWorkMin:0,totalRestMin:0,empty:true};
     });
     const maxTotal=Math.max(...slots.map(d=>(d.totalWorkMin||0)+(d.totalRestMin||0)),1);
@@ -1710,21 +1691,32 @@ function renderMonthly(){
         const rm=d.totalRestMin||0;
         const wPct=Math.round((wm/maxTotal)*100);
         const rPct=Math.round((rm/maxTotal)*100);
+        const valText=wm>0
+          ? m2s(wm)+(rm>0?' <span style="font-size:10px;color:var(--tx2);font-weight:400">(+'+m2s(rm)+')</span>':'')
+          : '<span style="color:var(--tx3)">—</span>';
         return '<div class="wrow">'
           +'<span class="wlbl">'+d.week+'주차</span>'
           +'<div class="wtrack">'
           +(wm>0?'<div class="wbar" style="width:'+wPct+'%"></div>':'')
           +(rm>0?'<div class="wbar-rest" style="width:'+rPct+'%"></div>':'')
           +'</div>'
-          +'<div class="wval">'
-          +(wm>0?'<span class="wval-total">'+m2s(wm)+'</span>':'<span class="wval-total" style="color:var(--tx3)">—</span>')
-          +(rm>0?'<span class="wval-sub">+'+m2s(rm)+'</span>':'')
-          +'</div>'
+          +'<div class="wval">'+valText+'</div>'
           +'</div>';
       }).join('');
       el.innerHTML=legend+bars;
     }
   }
+
+  // ── 주차별 상세 테이블 ──
+  _detailMode = 'week';
+  _detailArgs = {year, month, data, db};
+  if(!data.length){
+    document.getElementById('mtbl').innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
+    renderMonthlySummary(year,month);
+    renderTaskList(year,month,db);
+    return;
+  }
+  renderDetailByWeek(data);
 
   // ── 월별 집계 ──
   renderMonthlySummary(year,month);
