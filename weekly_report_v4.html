@@ -334,13 +334,14 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
   .doc-title-bar{flex-wrap:wrap;gap:6px}
   .doc-title-text{font-size:12px}
   .doc-title-copy{padding:4px 10px}
-  /* 업무 테이블 - 가로 스크롤 (컬럼 숨기지 않음) */
-  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table.rt{font-size:11px;min-width:600px}
-  table.rt th,table.rt td{padding:2px 2px}
-  table.rt col:nth-child(3){width:140px!important;min-width:140px!important}
-  table.rt col.cn{width:70px!important}
-  .task-inp,.note-inp{font-size:11px}
+  /* 업무 테이블 - width:100% 해제하고 고정 너비로 가로 스크롤 */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
+    /* scroll 힌트 그라데이션 */
+    background:linear-gradient(to right,white 30%,rgba(255,255,255,0)),
+              linear-gradient(to left,white 30%,rgba(255,255,255,0)) 100% 0;
+    background-size:40px 100%;background-repeat:no-repeat;background-attachment:local}
+  table.rt{width:700px!important;font-size:11px}
+  table.rt th,table.rt td{padding:3px 2px}
   /* 바차트 */
   .bwrap2 .wtrack{flex:0 0 55%}
   .bwrap2 .wval{font-size:10px}
