@@ -710,6 +710,16 @@ function calcWork(inM,outM,restM){
   let d=outM-inM;if(d<0)d+=1440;if(d<=0)return null;
   return Math.max(0,d-restM);
 }
+// 2026-07-06(월)부터 평일은 출근 9시 이전이어도 9시부터 근무시간 산정
+// 주말·공휴일은 실제 출근시간 그대로 적용
+const WORK_RULE_DATE=new Date(2026,6,6); // 2026-07-06
+function effectiveInM(inM,date,isHoliday){
+  if(inM==null||!date)return inM;
+  if(date<WORK_RULE_DATE)return inM;         // 규칙 적용 전 날짜
+  const dow=date.getDay();
+  if(dow===0||dow===6||isHoliday)return inM; // 주말·공휴일: 실제 출근시간 적용
+  return Math.max(inM,540);                   // 평일: 9시(540분) 이전이면 9시로 보정
+}
 function isON(inM,outM){return inM!=null&&outM!=null&&outM<inM;}
 function m2s(m){
   if(m==null||isNaN(m)||m<0)return'-';
@@ -1032,7 +1042,8 @@ function renderTable(){
     const dow=r.date.getDay();
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime);
     const restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);
+    const effInM=effectiveInM(inM,r.date,r.holiday);
+    const wm=calcWork(effInM,outM,restM);
     const ot=isON(inM,outM);
     const meal=calcMeal(inM,outM,dow,r.holiday);
     if(dow===6)tr.classList.add('sat');else if(dow===0)tr.classList.add('sun');
@@ -1158,7 +1169,7 @@ function updateRow(i){
   // 퇴근시간 변경 시 휴게시간 자동 조정
   autoRest(i);
 
-  const wm=calcWork(inM,outM,Math.round((r.rest||0)*60));
+  const wm=calcWork(effectiveInM(inM,r.date,r.holiday),outM,Math.round((r.rest||0)*60));
   const ot=isON(inM,outM);
   const meal=calcMeal(inM,outM,dow,r.holiday);
   const noWork=r.imp&&r.inTime==='-';
@@ -1190,10 +1201,7 @@ function updateTotals(){
     if(r.extra) return; // 추가 빈 행 제외
     const dow=r.date.getDay();
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);
-    if(wm!=null){tw+=wm;hw=true;}
-    if(inM!=null&&outM!=null){tr2+=restM;hr=true;}
-    const meal=calcMeal(inM,outM,dow,r.holiday);
+    const wm=calcWork(effectiveInM(inM,r.date,r.holiday),outM,restM);
     if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
   });
@@ -1429,7 +1437,7 @@ function saveWeek(){
   rows.forEach(r=>{
     if(r.extra) return;
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);if(wm!=null){tw+=wm;if(inM!=null&&outM!=null)tr+=restM;}
+    const wm=calcWork(effectiveInM(inM,r.date,r.holiday),outM,restM);if(wm!=null){tw+=wm;if(inM!=null&&outM!=null)tr+=restM;}
     const meal=calcMeal(inM,outM,r.date.getDay(),r.holiday);
     if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
@@ -1485,7 +1493,7 @@ function buildWeekSheetData(weekKey){
   const dataRows=sv.days.map((d,i)=>{
     const dt=new Date(mon);dt.setDate(dt.getDate()+i);
     const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);
+    const wm=calcWork(effectiveInM(inM,dt,d.holiday),outM,restM);
     const meal=calcMeal(inM,outM,dt.getDay(),d.holiday);
     return[fmtDay(dt),DAYS[dt.getDay()],d.task||'',wm!=null?m2s(wm):'',restM>0?m2s(restM):'',d.note||'',meal.count>0?won(meal.amt):''];
   });
@@ -1493,7 +1501,7 @@ function buildWeekSheetData(weekKey){
   sv.days.forEach((d,i)=>{
     const dt=new Date(mon);dt.setDate(dt.getDate()+i);
     const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);if(wm!=null)tw+=wm;
+    const wm=calcWork(effectiveInM(inM,dt,d.holiday),outM,restM);if(wm!=null)tw+=wm;
     if(inM!=null&&outM!=null)tr2+=restM;
     const meal=calcMeal(inM,outM,dt.getDay(),d.holiday);tc+=meal.count;ta+=meal.amt;
   });
@@ -1512,10 +1520,10 @@ function exportWeek(){
   rows.forEach(r=>{
     if(r.extra||!r.date) return;
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);if(wm!=null)tw+=wm;
+    const wm=calcWork(effectiveInM(inM,r.date,r.holiday),outM,restM);if(wm!=null)tw+=wm;
     if(inM!=null&&outM!=null)tr2+=restM;
     const meal=calcMeal(inM,outM,r.date.getDay(),r.holiday);tc+=meal.count;ta+=meal.amt;
-    const wm2=calcWork(inM,outM,restM);
+    const wm2=calcWork(effectiveInM(inM,r.date,r.holiday),outM,restM);
     wsData.push([fmtDay(r.date),DAYS[r.date.getDay()],r.task||'',wm2!=null?m2s(wm2):'',restM>0?m2s(restM):'',r.note||'',meal.count>0?won(meal.amt):'']);
   });
   wsData.push(['주간 합계','','',m2s(tw),m2s(tr2),'',tc>0?`${tc}회 ${won(ta)}`:'']);
@@ -1546,7 +1554,7 @@ function exportMonth(){
     sv.days.forEach((d,i)=>{
       const dt=new Date(mon);dt.setDate(dt.getDate()+i);
       const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);if(wm!=null)ww+=wm;
+      const wm=calcWork(effectiveInM(inM,dt,d.holiday),outM,restM);if(wm!=null)ww+=wm;
       if(inM!=null&&outM!=null)wr+=restM;
       const meal=calcMeal(inM,outM,dt.getDay(),d.holiday);wc+=meal.count;wa+=meal.amt;
       allData.push([fmtDay(dt),DAYS[dt.getDay()],d.task||'',wm!=null?m2s(wm):'',restM>0?m2s(restM):'',d.note||'',meal.count>0?won(meal.amt):'']);
@@ -1637,7 +1645,7 @@ function renderMonthly(){
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
       if(dd<firstDay||dd>lastDay)return;
       const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);if(wm==null)return;
+      const wm=calcWork(effectiveInM(inM,dd,d.holiday||false),outM,restM);if(wm==null)return;
       wkMin+=wm; kpiWork+=wm; kpiDays++;
       const meal=calcMeal(inM,outM,dd.getDay(),d.holiday||false);
       if(meal.type==='eve'){kpiEveCnt+=meal.count;kpiEveAmt+=meal.amt;}
@@ -1754,7 +1762,7 @@ function renderMonthlySummary(year, month){
       const inM  = parseTime(d.inTime);
       const outM = parseTime(d.outTime);
       const restM= Math.round((d.rest||0)*60);
-      const wm   = calcWork(inM, outM, restM);
+      const wm   = calcWork(effectiveInM(inM,dayDate,d.holiday||false), outM, restM);
       if(wm == null) return;
 
       weekWorkMin += wm;
@@ -1867,7 +1875,7 @@ function renderDetailByWeek(data){
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
       const dow=dd.getDay();
       const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);
+      const wm=calcWork(effectiveInM(inM,dd,d.holiday||false),outM,restM);
       const meal=calcMeal(inM,outM,dow,d.holiday||false);
       if(wm!=null) wkWork+=wm;
       if(inM!=null&&outM!=null) wkRestMin+=restM;
@@ -1932,7 +1940,7 @@ function renderDetailByMonth(year, month, db){
     const {date:dd, day:d}=dayMap[k];
     const dow=dd.getDay();
     const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);
+    const wm=calcWork(effectiveInM(inM,dd,d.holiday||false),outM,restM);
     const meal=calcMeal(inM,outM,dow,d.holiday||false);
     if(wm!=null) totWork+=wm;
     if(inM!=null&&outM!=null) totRestMin+=restM;
