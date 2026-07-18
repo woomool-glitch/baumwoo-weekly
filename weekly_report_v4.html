@@ -715,10 +715,12 @@ function calcWork(inM,outM,restM){
 const WORK_RULE_DATE=new Date(2026,6,6); // 2026-07-06
 function effectiveInM(inM,date,isHoliday){
   if(inM==null||!date)return inM;
-  if(date<WORK_RULE_DATE)return inM;         // 규칙 적용 전 날짜
-  const dow=date.getDay();
-  if(dow===0||dow===6||isHoliday)return inM; // 주말·공휴일: 실제 출근시간 적용
-  return Math.max(inM,540);                   // 평일: 9시(540분) 이전이면 9시로 보정
+  const d=date instanceof Date?date:new Date(date);
+  if(isNaN(d.getTime()))return inM;
+  if(d<WORK_RULE_DATE)return inM;
+  const dow=d.getDay();
+  if(dow===0||dow===6||isHoliday)return inM;
+  return Math.max(inM,540);
 }
 function isON(inM,outM){return inM!=null&&outM!=null&&outM<inM;}
 function m2s(m){
@@ -1205,6 +1207,7 @@ function updateTotals(){
     if(wm!=null){tw+=wm;hw=true;}
     if(inM!=null&&outM!=null){tr2+=restM;hr=true;}
     const meal=calcMeal(inM,outM,dow,r.holiday);
+    if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
   });
 
