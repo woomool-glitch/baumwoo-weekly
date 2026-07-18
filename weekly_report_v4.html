@@ -208,56 +208,41 @@ label.ab{display:inline-flex;align-items:center}
 .kpi.hi-eve{border-top-color:#A84800}
 .kpi.hi-wkd{border-top-color:var(--purple)}
 .kpi.hi-total{border-top-color:var(--green)}
-/* 주52시간 오버타임 대시보드 */
-.ot-dashboard{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:18px 20px;margin-bottom:14px}
-.ot-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.ot-title .ot-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--accent);color:#fff}
-.ot-compare{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
-.ot-row{display:flex;align-items:center;gap:10px}
-.ot-row-lbl{font-size:11px;font-weight:700;color:var(--tx2);width:36px;flex-shrink:0;text-align:right}
-.ot-track{flex:1;height:22px;background:var(--bg);border-radius:3px;overflow:visible;position:relative}
-.ot-track-inner{height:100%;border-radius:3px;transition:width .5s ease;position:relative}
-.ot-track-base{background:linear-gradient(90deg,#d0e8ff,#a8d0f8)}
-.ot-track-act-ok{background:linear-gradient(90deg,#378ADD,#5fb8ef)}
-.ot-track-act-over{background:linear-gradient(90deg,#e05c2a,#f5854a)}
-.ot-marker{position:absolute;top:-4px;bottom:-4px;width:2px;background:#378ADD;border-radius:2px;opacity:.6}
-.ot-row-val{font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;width:100px;flex-shrink:0}
-.ot-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
-.ot-kpi{background:var(--bg);border-radius:4px;padding:12px 14px;border-left:3px solid var(--bd)}
-.ot-kpi.ok-work{border-left-color:var(--accent)}
-.ot-kpi.ok-ot{border-left-color:#e05c2a}
-.ot-kpi.ok-leave{border-left-color:var(--green)}
-.ot-kpi .ok-label{font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:6px;letter-spacing:.05em}
-.ot-kpi .ok-val{font-size:18px;font-weight:700;color:var(--tx);line-height:1.2}
-.ot-kpi .ok-sub{font-size:10px;color:var(--tx3);margin-top:3px}
-.ot-kpi.ok-ot .ok-val.over{color:#e05c2a}
-.ot-kpi.ok-ot .ok-val.under{color:var(--tx3)}
-.ot-kpi.ok-leave .ok-val.has-leave{color:var(--green)}
+/* 주52시간 분기별 대시보드 — 모던 디자인 */
+.q-chart-card{background:#fff;border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,.07);overflow:hidden;margin-bottom:16px}
+.q-chart-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 6px;gap:8px;flex-wrap:wrap}
+.q-chart-title{font-size:14px;font-weight:700;color:#111827;letter-spacing:-.01em}
+.q-chart-sub{font-size:10px;color:#9CA3AF;margin-top:2px}
+/* 분기 통계 그리드 */
+.q-stat-grid{display:grid;grid-template-columns:64px repeat(4,1fr);border-top:1px solid #F3F4F6}
+.q-stat-lbl-col{background:#FAFAFA;border-right:1px solid #F3F4F6;display:flex;flex-direction:column}
+.q-stat-lbl-hd{height:48px;border-bottom:1px solid #F3F4F6}
+.q-stat-lbl-cell{display:flex;align-items:center;padding:0 10px;font-size:9.5px;font-weight:700;color:#9CA3AF;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid #F3F4F6;min-height:56px}
+.q-stat-lbl-cell:last-child{border-bottom:none;min-height:54px}
+.q-stat-col{display:flex;flex-direction:column;border-right:1px solid #F3F4F6;transition:background .15s}
+.q-stat-col:last-child{border-right:none}
+.q-stat-col-hd{padding:10px 4px 8px;text-align:center;border-bottom:1px solid #F3F4F6;background:#FAFAFA;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.q-stat-col-hd .qch-name{font-size:11.5px;font-weight:700;color:#374151}
+.q-stat-col-hd .qch-period{font-size:9px;color:#9CA3AF;margin-top:2px}
+.q-stat-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 4px;text-align:center;border-bottom:1px solid #F3F4F6;min-height:56px}
+.q-stat-cell:last-child{border-bottom:none;min-height:54px}
+.q-stat-cell .qsc-num{font-size:17px;font-weight:700;color:#111827;line-height:1.1;letter-spacing:-.02em}
+.q-stat-cell .qsc-unit{font-size:10px;color:#9CA3AF;margin-top:2px}
+.q-stat-cell .qsc-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;margin-top:4px;display:inline-block}
+.qsc-badge.over{background:#FEE2E2;color:#DC2626}
+.qsc-badge.under{background:#F3F4F6;color:#6B7280}
+.qsc-badge.leave{background:#DCFCE7;color:#15803D}
+.qsc-num.c-over{color:#DC2626}
+.qsc-num.c-under{color:#9CA3AF}
+.qsc-num.c-leave{color:#15803D}
+/* 연간 합계 바 */
+.q-annual-total{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:14px 20px;background:linear-gradient(90deg,#fff,#F0FDF4);border-top:1px solid #D1FAE5}
+.q-annual-total .qat-label{font-size:11px;color:#6B7280;font-weight:500}
+.q-annual-total .qat-val{font-size:30px;font-weight:800;color:#15803D;line-height:1;letter-spacing:-.03em}
+.q-annual-total .qat-unit{font-size:13px;color:#6B7280;font-weight:400}
 /* 월별 상세 접기 토글 */
 .q-detail-toggle{cursor:pointer;font-size:12px;font-weight:700;color:var(--accent);padding:8px 0;display:flex;align-items:center;gap:6px;user-select:none;border-top:1px solid var(--bd);margin-top:6px}
 .q-detail-toggle:hover{opacity:.75}
-/* 분기별 연간 개요 차트 */
-.q-chart-card{background:var(--bg);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:14px}
-.q-chart-header{display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 4px;flex-wrap:wrap;gap:4px}
-.q-chart-title{font-size:13px;font-weight:700;color:var(--tx)}
-.q-chart-sub{font-size:10px;color:var(--tx3)}
-.q-data-table{border-top:1px solid var(--bd)}
-.q-data-row{display:grid;grid-template-columns:76px repeat(4,1fr);border-bottom:1px solid var(--bd2)}
-.q-data-row:last-child{border-bottom:none}
-.q-row-lbl{font-size:10px;font-weight:700;color:var(--tx3);padding:10px 8px;display:flex;align-items:center;letter-spacing:.04em;background:var(--bg2)}
-.q-cell{font-size:13px;font-weight:700;color:var(--tx);text-align:center;padding:10px 4px;border-left:1px solid var(--bd2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-.q-cell span{font-size:10px;font-weight:400;color:var(--tx3)}
-.q-cell.is-over{color:#EF4444}
-.q-cell.is-under{color:var(--tx3)}
-.q-cell.is-leave{color:#22C55E}
-.q-tag{font-size:9px;padding:1px 6px;border-radius:10px;font-weight:600;margin-top:1px}
-.is-over .q-tag{background:#FEE2E2;color:#EF4444}
-.is-under .q-tag{background:var(--bg2);color:var(--tx3)}
-.is-leave .q-tag{background:#DCFCE7;color:#16A34A}
-.q-total-leave-bar{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:12px 18px;background:var(--bg2);border-top:1px solid var(--bd)}
-.q-total-leave-bar .ql-label{font-size:11px;color:var(--tx3)}
-.q-total-leave-bar .ql-val{font-size:28px;font-weight:700;color:#16A34A;line-height:1}
-.q-total-leave-bar .ql-unit{font-size:13px;color:var(--tx3)}
 /* 통계 테이블 */
 table.mtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 table.mtbl th{background:var(--bg2);padding:7px 10px;border:1px solid var(--bd);text-align:center;font-size:10px;font-weight:700;color:var(--tx2);white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase}
@@ -2196,33 +2181,31 @@ function renderQuarter(){
   });
 
   // ── SVG 세로 막대 차트 ──
-  const maxH=Math.max(...allQ.map(q=>q.actH), QUOTA_H)*1.2;
-  const VW=520, VH=220;
-  const ML=50,MR=14,MT=28,MB=44;
+  const maxH=Math.max(...allQ.map(q=>q.actH), QUOTA_H)*1.18;
+  const VW=500, VH=210;
+  const ML=48,MR=12,MT=26,MB=42;
   const CW=VW-ML-MR, CH=VH-MT-MB;
   const BotY=MT+CH, TopY=MT;
   const secW=CW/4;
-  const barW=Math.min(52,secW*0.52);
+  const barW=Math.min(60,secW*0.45);
   const toY=(h)=>BotY-(h/maxH)*CH;
   const baseY=toY(QUOTA_H);
 
-  // 배경 그리드
-  let svgEl='';
+  // ─ 레이어 1: 그리드 선 (가장 아래)
+  let layer1='';
+  layer1+=`<rect x="${ML}" y="${TopY}" width="${CW}" height="${CH}" fill="#FAFBFC" rx="0"/>`;
   [200,400,600].forEach(gh=>{
     const gy=toY(gh);
     if(gy>=TopY&&gy<=BotY){
-      svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${gy}" y2="${gy}" stroke="#E2E8F0" stroke-width="1"/>`;
-      svgEl+=`<text x="${ML-5}" y="${gy}" text-anchor="end" font-size="9" fill="#94A3B8" dominant-baseline="middle">${gh}</text>`;
+      layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${gy}" y2="${gy}" stroke="#E5E7EB" stroke-width="1"/>`;
+      layer1+=`<text x="${ML-5}" y="${gy}" text-anchor="end" font-size="8.5" fill="#9CA3AF" dominant-baseline="middle">${gh}</text>`;
     }
   });
-  // 677.81 기준선 (점선)
-  svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${baseY}" y2="${baseY}" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="6,4"/>`;
-  svgEl+=`<text x="${ML-5}" y="${baseY-1}" text-anchor="end" font-size="9" fill="#6B7280" font-weight="700" dominant-baseline="auto">677.81</text>`;
-  // 축선
-  svgEl+=`<line x1="${ML}" x2="${ML}" y1="${TopY}" y2="${BotY}" stroke="#E2E8F0" stroke-width="1"/>`;
-  svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${BotY}" y2="${BotY}" stroke="#E2E8F0" stroke-width="1"/>`;
+  layer1+=`<line x1="${ML}" x2="${ML}" y1="${TopY}" y2="${BotY}" stroke="#D1D5DB" stroke-width="1"/>`;
+  layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${BotY}" y2="${BotY}" stroke="#D1D5DB" stroke-width="1"/>`;
 
-  // 막대 + 레이블
+  // ─ 레이어 2: 막대
+  let layer2='';
   allQ.forEach((q,i)=>{
     const cx=ML+i*secW+secW/2;
     const bx=cx-barW/2;
@@ -2232,74 +2215,99 @@ function renderQuarter(){
     const overPx=(overH/maxH)*CH;
     const normalY=BotY-normalPx;
     const overY=normalY-overPx;
-
-    // 막대 배경
-    svgEl+=`<rect x="${bx}" y="${TopY}" width="${barW}" height="${CH}" fill="#F8FAFC" rx="2"/>`;
-    // 일반 구간 (파란색)
-    if(normalPx>0.5) svgEl+=`<rect x="${bx}" y="${normalY}" width="${barW}" height="${normalPx}" fill="#3B82F6" rx="3"/>`;
-    // 초과 구간 (빨간색)
-    if(overPx>0.5) svgEl+=`<rect x="${bx}" y="${overY}" width="${barW}" height="${overPx}" fill="#EF4444" rx="3"/>`;
-
-    // 상단 수치
-    const topBarY=q.actH>0?(overPx>0.5?overY:normalY)-5:BotY-5;
+    // 일반 구간
+    if(normalPx>0.5) layer2+=`<rect x="${bx}" y="${normalY}" width="${barW}" height="${normalPx}" fill="url(#gBlue)" rx="4" filter="url(#bshadow)"/>`;
+    // 초과 구간
+    if(overPx>0.5) layer2+=`<rect x="${bx}" y="${overY}" width="${barW}" height="${overPx}" fill="url(#gRed)" rx="4"/>`;
+    // 수치 레이블 (막대 위)
     if(q.actH>0){
+      const lY=(overPx>0.5?overY:normalY)-5;
       const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
-      svgEl+=`<text x="${cx}" y="${topBarY}" text-anchor="middle" font-size="9.5" fill="${q.isOver?'#EF4444':'#3B82F6'}" font-weight="700">${hh}h${mm>0?' '+mm+'m':''}</text>`;
+      layer2+=`<text x="${cx}" y="${lY}" text-anchor="middle" font-size="9" fill="${q.isOver?'#DC2626':'#2563EB'}" font-weight="700">${hh}h${mm>0?' '+mm+'m':''}</text>`;
     }
-    // 하단 분기 레이블
-    svgEl+=`<text x="${cx}" y="${BotY+13}" text-anchor="middle" font-size="10.5" fill="#374151" font-weight="700">${q.q}분기</text>`;
-    svgEl+=`<text x="${cx}" y="${BotY+26}" text-anchor="middle" font-size="9" fill="#94A3B8">${qShort[i]}</text>`;
+    // 하단 분기/기간 레이블
+    layer2+=`<text x="${cx}" y="${BotY+14}" text-anchor="middle" font-size="10.5" fill="#374151" font-weight="700">${q.q}분기</text>`;
+    layer2+=`<text x="${cx}" y="${BotY+27}" text-anchor="middle" font-size="8.5" fill="#9CA3AF">${['12~2월','3~5월','6~8월','9~11월'][i]}</text>`;
   });
 
-  const svgStr=`<svg viewBox="0 0 ${VW} ${VH}" width="100%" style="display:block;padding:0 4px">${svgEl}</svg>`;
+  // ─ 레이어 3: 기준선 (맨 위 — 막대 위에 그려짐)
+  let layer3='';
+  layer3+=`<line x1="${ML}" x2="${VW-MR}" y1="${baseY}" y2="${baseY}" stroke="#374151" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.7"/>`;
+  layer3+=`<text x="${ML-5}" y="${baseY}" text-anchor="end" font-size="8.5" fill="#374151" font-weight="700" dominant-baseline="middle">677.81</text>`;
 
-  // ── 데이터 테이블 ──
-  const row1=allQ.map(q=>{
+  const svgStr=`<svg viewBox="0 0 ${VW} ${VH}" width="100%" style="display:block;padding:0 2px">
+    <defs>
+      <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#60A5FA"/>
+        <stop offset="100%" stop-color="#1D4ED8"/>
+      </linearGradient>
+      <linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FCA5A5"/>
+        <stop offset="100%" stop-color="#B91C1C"/>
+      </linearGradient>
+      <filter id="bshadow" x="-20%" y="-10%" width="140%" height="130%">
+        <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1D4ED8" flood-opacity="0.18"/>
+      </filter>
+    </defs>
+    ${layer1}${layer2}${layer3}
+  </svg>`;
+
+  // ── 컬럼 카드 방식 데이터 섹션 ──
+  const qNames=['1분기','2분기','3분기','4분기'];
+  const qPeriods=['12~2월','3~5월','6~8월','9~11월'];
+
+  const statCols=allQ.map((q,i)=>{
+    // 총 근무시간
     const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
-    return`<div class="q-cell">${q.totW>0?`${hh}H <span>${mm}M</span>`:'-'}</div>`;
-  }).join('');
-  const row2=allQ.map(q=>{
-    if(!q.totW) return`<div class="q-cell is-under">-</div>`;
-    const ah=Math.abs(q.diffH),hh=Math.floor(ah),mm=Math.round((ah-hh)*60);
-    return`<div class="q-cell ${q.isOver?'is-over':'is-under'}">
-      ${q.isOver?'+':'-'}${hh}h${mm>0?' '+mm+'m':''}
-      <span class="q-tag">${q.isOver?'초과':'미달'}</span>
-    </div>`;
-  }).join('');
-  const row3=allQ.map(q=>{
-    return`<div class="q-cell ${q.leaveDays>0?'is-leave':'is-under'}">
-      ${q.leaveDays>0?q.leaveDays:'0'}<span>일</span>
+    const workCell=q.totW>0
+      ?`<div class="qsc-num">${hh}<span style="font-size:11px;font-weight:500;color:#6B7280">h</span> ${mm}<span style="font-size:11px;font-weight:500;color:#6B7280">m</span></div>`
+      :`<div class="qsc-num c-under">—</div>`;
+    // 기준 대비
+    const ah=Math.abs(q.diffH),dh=Math.floor(ah),dm=Math.round((ah-dh)*60);
+    const diffCell=q.totW===0
+      ?`<div class="qsc-num c-under">—</div>`
+      :`<div class="qsc-num ${q.isOver?'c-over':'c-under'}">${q.isOver?'+':'-'}${dh}<span style="font-size:11px;font-weight:500">h</span>${dm>0?` ${dm}<span style="font-size:11px">m</span>`:''}</div>
+       <span class="qsc-badge ${q.isOver?'over':'under'}">${q.isOver?'초과':'미달'}</span>`;
+    // 보상 휴가
+    const leaveCell=q.leaveDays>0
+      ?`<div class="qsc-num c-leave">${q.leaveDays}</div><span class="qsc-badge leave">일</span>`
+      :`<div class="qsc-num c-under">0</div><span class="qsc-badge under">일</span>`;
+    return`<div class="q-stat-col">
+      <div class="q-stat-col-hd">
+        <div class="qch-name">${qNames[i]}</div>
+        <div class="qch-period">${qPeriods[i]}</div>
+      </div>
+      <div class="q-stat-cell">${workCell}<div class="qsc-unit">총 근무시간</div></div>
+      <div class="q-stat-cell">${diffCell}<div class="qsc-unit">기준 대비</div></div>
+      <div class="q-stat-cell">${leaveCell}<div class="qsc-unit">보상 휴가</div></div>
     </div>`;
   }).join('');
 
-  // 연간 총 보상휴가
   const totalLeaveH=allQ.reduce((s,q)=>s+(q.isOver?q.diffH:0),0);
   const totalLeaveDays=Math.round(totalLeaveH/8*10)/10;
-  const totalLeaveInt=Math.floor(totalLeaveDays);
-  const totalLeaveRem=Math.round((totalLeaveDays-totalLeaveInt)*10)/10;
 
   document.getElementById('q-annual-view').innerHTML=`
   <div class="q-chart-card">
     <div class="q-chart-header">
-      <span class="q-chart-title">분기별 주52시간 정산 — ${year}년</span>
-      <span class="q-chart-sub">기준 677.81h = 52h × 4.345주 × 3개월</span>
+      <div>
+        <div class="q-chart-title">분기별 주52시간 정산 — ${year}년</div>
+        <div class="q-chart-sub">기준 677.81h = 52h × 4.345주 × 3개월 &nbsp;│&nbsp; 🔵 정상 &nbsp; 🔴 초과</div>
+      </div>
     </div>
     ${svgStr}
-    <div class="q-data-table">
-      <div class="q-data-row">
-        <div class="q-row-lbl">총 근무시간</div>${row1}
+    <div class="q-stat-grid">
+      <div class="q-stat-lbl-col">
+        <div class="q-stat-lbl-hd"></div>
+        <div class="q-stat-lbl-cell">총 근무</div>
+        <div class="q-stat-lbl-cell">기준 대비</div>
+        <div class="q-stat-lbl-cell">보상 휴가</div>
       </div>
-      <div class="q-data-row">
-        <div class="q-row-lbl">기준 대비</div>${row2}
-      </div>
-      <div class="q-data-row">
-        <div class="q-row-lbl">보상 휴가</div>${row3}
-      </div>
+      ${statCols}
     </div>
     ${totalLeaveDays>0?`
-    <div class="q-total-leave-bar">
-      <span class="ql-label">${year}년 대체휴무 발생일</span>
-      <span class="ql-val">${totalLeaveInt}<span class="ql-unit">일${totalLeaveRem>0?' '+totalLeaveRem+'h':''}</span></span>
+    <div class="q-annual-total">
+      <span class="qat-label">${year}년 연간 대체휴무 발생일</span>
+      <span class="qat-val">${Math.floor(totalLeaveDays)}<span class="qat-unit">일${(totalLeaveDays%1>0)?' '+Math.round(totalLeaveDays%1*8)+'h':''}</span></span>
     </div>`:''}
   </div>`;
 
