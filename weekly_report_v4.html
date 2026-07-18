@@ -208,6 +208,56 @@ label.ab{display:inline-flex;align-items:center}
 .kpi.hi-eve{border-top-color:#A84800}
 .kpi.hi-wkd{border-top-color:var(--purple)}
 .kpi.hi-total{border-top-color:var(--green)}
+/* 주52시간 오버타임 대시보드 */
+.ot-dashboard{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:18px 20px;margin-bottom:14px}
+.ot-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ot-title .ot-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--accent);color:#fff}
+.ot-compare{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.ot-row{display:flex;align-items:center;gap:10px}
+.ot-row-lbl{font-size:11px;font-weight:700;color:var(--tx2);width:36px;flex-shrink:0;text-align:right}
+.ot-track{flex:1;height:22px;background:var(--bg);border-radius:3px;overflow:visible;position:relative}
+.ot-track-inner{height:100%;border-radius:3px;transition:width .5s ease;position:relative}
+.ot-track-base{background:linear-gradient(90deg,#d0e8ff,#a8d0f8)}
+.ot-track-act-ok{background:linear-gradient(90deg,#378ADD,#5fb8ef)}
+.ot-track-act-over{background:linear-gradient(90deg,#e05c2a,#f5854a)}
+.ot-marker{position:absolute;top:-4px;bottom:-4px;width:2px;background:#378ADD;border-radius:2px;opacity:.6}
+.ot-row-val{font-size:12px;font-weight:700;color:var(--tx);white-space:nowrap;width:100px;flex-shrink:0}
+.ot-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.ot-kpi{background:var(--bg);border-radius:4px;padding:12px 14px;border-left:3px solid var(--bd)}
+.ot-kpi.ok-work{border-left-color:var(--accent)}
+.ot-kpi.ok-ot{border-left-color:#e05c2a}
+.ot-kpi.ok-leave{border-left-color:var(--green)}
+.ot-kpi .ok-label{font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:6px;letter-spacing:.05em}
+.ot-kpi .ok-val{font-size:18px;font-weight:700;color:var(--tx);line-height:1.2}
+.ot-kpi .ok-sub{font-size:10px;color:var(--tx3);margin-top:3px}
+.ot-kpi.ok-ot .ok-val.over{color:#e05c2a}
+.ot-kpi.ok-ot .ok-val.under{color:var(--tx3)}
+.ot-kpi.ok-leave .ok-val.has-leave{color:var(--green)}
+/* 월별 상세 접기 토글 */
+.q-detail-toggle{cursor:pointer;font-size:12px;font-weight:700;color:var(--accent);padding:8px 0;display:flex;align-items:center;gap:6px;user-select:none;border-top:1px solid var(--bd);margin-top:6px}
+.q-detail-toggle:hover{opacity:.75}
+/* 분기별 연간 개요 차트 */
+.q-chart-card{background:var(--bg);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.q-chart-header{display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 4px;flex-wrap:wrap;gap:4px}
+.q-chart-title{font-size:13px;font-weight:700;color:var(--tx)}
+.q-chart-sub{font-size:10px;color:var(--tx3)}
+.q-data-table{border-top:1px solid var(--bd)}
+.q-data-row{display:grid;grid-template-columns:76px repeat(4,1fr);border-bottom:1px solid var(--bd2)}
+.q-data-row:last-child{border-bottom:none}
+.q-row-lbl{font-size:10px;font-weight:700;color:var(--tx3);padding:10px 8px;display:flex;align-items:center;letter-spacing:.04em;background:var(--bg2)}
+.q-cell{font-size:13px;font-weight:700;color:var(--tx);text-align:center;padding:10px 4px;border-left:1px solid var(--bd2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.q-cell span{font-size:10px;font-weight:400;color:var(--tx3)}
+.q-cell.is-over{color:#EF4444}
+.q-cell.is-under{color:var(--tx3)}
+.q-cell.is-leave{color:#22C55E}
+.q-tag{font-size:9px;padding:1px 6px;border-radius:10px;font-weight:600;margin-top:1px}
+.is-over .q-tag{background:#FEE2E2;color:#EF4444}
+.is-under .q-tag{background:var(--bg2);color:var(--tx3)}
+.is-leave .q-tag{background:#DCFCE7;color:#16A34A}
+.q-total-leave-bar{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:12px 18px;background:var(--bg2);border-top:1px solid var(--bd)}
+.q-total-leave-bar .ql-label{font-size:11px;color:var(--tx3)}
+.q-total-leave-bar .ql-val{font-size:28px;font-weight:700;color:#16A34A;line-height:1}
+.q-total-leave-bar .ql-unit{font-size:13px;color:var(--tx3)}
 /* 통계 테이블 */
 table.mtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 table.mtbl th{background:var(--bg2);padding:7px 10px;border:1px solid var(--bd);text-align:center;font-size:10px;font-weight:700;color:var(--tx2);white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase}
@@ -631,7 +681,6 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
     <div style="overflow-x:auto"><table class="mtbl" id="mtbl"></table></div>
 
     <!-- ④ 업무내용 날짜순 리스트 -->
-    <div class="shd" style="margin-top:28px">업무내용 — 날짜순</div>
     <div id="task-list"></div>
   </div>
 
@@ -639,18 +688,28 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
   <div class="stat-pg" id="stp-quarter">
     <div class="mon-sel">
       <select id="qY" onchange="renderQuarter()"></select>
-      <select id="qQ" onchange="renderQuarter()">
-        <option value="1">1분기 (12~2월)</option>
-        <option value="2">2분기 (3~5월)</option>
-        <option value="3">3분기 (6~8월)</option>
-        <option value="4">4분기 (9~11월)</option>
-      </select>
     </div>
-    <div class="kpi-grid" id="q-kpi"></div>
-    <div class="shd" style="margin-top:4px">월별 상세</div>
-    <div style="overflow-x:auto"><table class="mtbl" id="q-mtbl"></table></div>
-    <div class="shd">월별 업무시간</div>
-    <div class="bar-wrap2" id="q-bar"></div>
+    <!-- 4분기 전체 개요 차트 -->
+    <div id="q-annual-view"></div>
+    <!-- 분기별 월간 상세 (접기/펼치기) -->
+    <div class="q-detail-toggle" id="q-detail-toggle" onclick="toggleQDetail()">
+      <span id="q-detail-arrow">▶</span> 분기별 월간 상세 보기
+    </div>
+    <div id="q-detail-wrap" style="display:none">
+      <div class="mon-sel" style="margin:10px 0 14px">
+        <select id="qQ" onchange="renderQDetail()">
+          <option value="1">1분기 (12~2월)</option>
+          <option value="2">2분기 (3~5월)</option>
+          <option value="3">3분기 (6~8월)</option>
+          <option value="4">4분기 (9~11월)</option>
+        </select>
+      </div>
+      <div class="kpi-grid" id="q-kpi"></div>
+      <div class="shd" style="margin-top:4px">월별 상세</div>
+      <div style="overflow-x:auto"><table class="mtbl" id="q-mtbl"></table></div>
+      <div class="shd" style="margin-top:14px">월별 업무시간</div>
+      <div class="bar-wrap2" id="q-bar"></div>
+    </div>
   </div>
 
   <!-- ─ 연간 ─ -->
@@ -2003,7 +2062,7 @@ function renderTaskList(year, month, db){
 
   const keys = Object.keys(dayMap).sort();
   if(!keys.length){
-    el.innerHTML = '<div class="task-empty">저장된 업무내용이 없습니다</div>';
+    el.innerHTML = '';
     return;
   }
 
@@ -2021,7 +2080,7 @@ function renderTaskList(year, month, db){
     </div>`;
   }).join('');
 
-  el.innerHTML = `<div class="task-list-wrap">${rows2}</div>`;
+  el.innerHTML = `<div class="shd" style="margin-top:28px">업무내용 — 날짜순</div><div class="task-list-wrap">${rows2}</div>`;
 }
 
 // toggleWeekDetail 제거됨
@@ -2093,26 +2152,176 @@ function initQSel(){
   }
 }
 
+function toggleQDetail(){
+  const wrap=document.getElementById('q-detail-wrap');
+  const arrow=document.getElementById('q-detail-arrow');
+  const open=wrap.style.display==='none';
+  wrap.style.display=open?'block':'none';
+  arrow.textContent=open?'▼':'▶';
+  if(open) renderQDetail();
+}
+
 function renderQuarter(){
   const db=loadDB();
   const year=parseInt(document.getElementById('qY').value||new Date().getFullYear());
-  const q=parseInt(document.getElementById('qQ').value||1);
-  // 12월부터 시작하는 분기
-  // 1분기: 12(전년),1,2 / 2분기: 3,4,5 / 3분기: 6,7,8 / 4분기: 9,10,11
+  const QUOTA_H=677.81, QUOTA_MIN=Math.round(QUOTA_H*60);
   const qMonths={
     1:[{y:year-1,m:12},{y:year,m:1},{y:year,m:2}],
     2:[{y:year,m:3},{y:year,m:4},{y:year,m:5}],
     3:[{y:year,m:6},{y:year,m:7},{y:year,m:8}],
     4:[{y:year,m:9},{y:year,m:10},{y:year,m:11}],
   };
-  const qDefs=qMonths[q];
-  const qLabels={1:`${year-1}년 12월 ~ ${year}년 2월`,2:`${year}년 3~5월`,3:`${year}년 6~8월`,4:`${year}년 9~11월`};
+  const qShort=['12~2월','3~5월','6~8월','9~11월'];
 
-  // 월별 집계
-  const byM=qDefs.map(({y,m})=>{
+  // 4분기 전체 집계
+  const allQ=[1,2,3,4].map(q=>{
+    const byM=qMonths[q].map(({y,m})=>{
+      const weeks=Object.values(db).filter(d=>d.year===y&&d.month===m);
+      return{y,m,
+        workMin:weeks.reduce((s,d)=>s+(d.totalWorkMin||0),0),
+        weekCnt:weeks.length,
+        eveCnt:weeks.reduce((s,d)=>s+(d.meal?.eveCnt||0),0),
+        eveAmt:weeks.reduce((s,d)=>s+(d.meal?.eveAmt||0),0),
+        wkdCnt:weeks.reduce((s,d)=>s+(d.meal?.wkdCnt||0),0),
+        wkdAmt:weeks.reduce((s,d)=>s+(d.meal?.wkdAmt||0),0),
+      };
+    });
+    const totW=byM.reduce((s,m)=>s+m.workMin,0);
+    const actH=totW/60;
+    const diffMin=totW-QUOTA_MIN;
+    const diffH=diffMin/60;
+    const isOver=diffMin>0;
+    const leaveDays=isOver?Math.round(diffH/8*10)/10:0;
+    return{q,byM,totW,actH,diffMin,diffH,isOver,leaveDays};
+  });
+
+  // ── SVG 세로 막대 차트 ──
+  const maxH=Math.max(...allQ.map(q=>q.actH), QUOTA_H)*1.2;
+  const VW=520, VH=220;
+  const ML=50,MR=14,MT=28,MB=44;
+  const CW=VW-ML-MR, CH=VH-MT-MB;
+  const BotY=MT+CH, TopY=MT;
+  const secW=CW/4;
+  const barW=Math.min(52,secW*0.52);
+  const toY=(h)=>BotY-(h/maxH)*CH;
+  const baseY=toY(QUOTA_H);
+
+  // 배경 그리드
+  let svgEl='';
+  [200,400,600].forEach(gh=>{
+    const gy=toY(gh);
+    if(gy>=TopY&&gy<=BotY){
+      svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${gy}" y2="${gy}" stroke="#E2E8F0" stroke-width="1"/>`;
+      svgEl+=`<text x="${ML-5}" y="${gy}" text-anchor="end" font-size="9" fill="#94A3B8" dominant-baseline="middle">${gh}</text>`;
+    }
+  });
+  // 677.81 기준선 (점선)
+  svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${baseY}" y2="${baseY}" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="6,4"/>`;
+  svgEl+=`<text x="${ML-5}" y="${baseY-1}" text-anchor="end" font-size="9" fill="#6B7280" font-weight="700" dominant-baseline="auto">677.81</text>`;
+  // 축선
+  svgEl+=`<line x1="${ML}" x2="${ML}" y1="${TopY}" y2="${BotY}" stroke="#E2E8F0" stroke-width="1"/>`;
+  svgEl+=`<line x1="${ML}" x2="${VW-MR}" y1="${BotY}" y2="${BotY}" stroke="#E2E8F0" stroke-width="1"/>`;
+
+  // 막대 + 레이블
+  allQ.forEach((q,i)=>{
+    const cx=ML+i*secW+secW/2;
+    const bx=cx-barW/2;
+    const normalH=Math.min(q.actH,QUOTA_H);
+    const overH=Math.max(0,q.actH-QUOTA_H);
+    const normalPx=(normalH/maxH)*CH;
+    const overPx=(overH/maxH)*CH;
+    const normalY=BotY-normalPx;
+    const overY=normalY-overPx;
+
+    // 막대 배경
+    svgEl+=`<rect x="${bx}" y="${TopY}" width="${barW}" height="${CH}" fill="#F8FAFC" rx="2"/>`;
+    // 일반 구간 (파란색)
+    if(normalPx>0.5) svgEl+=`<rect x="${bx}" y="${normalY}" width="${barW}" height="${normalPx}" fill="#3B82F6" rx="3"/>`;
+    // 초과 구간 (빨간색)
+    if(overPx>0.5) svgEl+=`<rect x="${bx}" y="${overY}" width="${barW}" height="${overPx}" fill="#EF4444" rx="3"/>`;
+
+    // 상단 수치
+    const topBarY=q.actH>0?(overPx>0.5?overY:normalY)-5:BotY-5;
+    if(q.actH>0){
+      const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
+      svgEl+=`<text x="${cx}" y="${topBarY}" text-anchor="middle" font-size="9.5" fill="${q.isOver?'#EF4444':'#3B82F6'}" font-weight="700">${hh}h${mm>0?' '+mm+'m':''}</text>`;
+    }
+    // 하단 분기 레이블
+    svgEl+=`<text x="${cx}" y="${BotY+13}" text-anchor="middle" font-size="10.5" fill="#374151" font-weight="700">${q.q}분기</text>`;
+    svgEl+=`<text x="${cx}" y="${BotY+26}" text-anchor="middle" font-size="9" fill="#94A3B8">${qShort[i]}</text>`;
+  });
+
+  const svgStr=`<svg viewBox="0 0 ${VW} ${VH}" width="100%" style="display:block;padding:0 4px">${svgEl}</svg>`;
+
+  // ── 데이터 테이블 ──
+  const row1=allQ.map(q=>{
+    const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
+    return`<div class="q-cell">${q.totW>0?`${hh}H <span>${mm}M</span>`:'-'}</div>`;
+  }).join('');
+  const row2=allQ.map(q=>{
+    if(!q.totW) return`<div class="q-cell is-under">-</div>`;
+    const ah=Math.abs(q.diffH),hh=Math.floor(ah),mm=Math.round((ah-hh)*60);
+    return`<div class="q-cell ${q.isOver?'is-over':'is-under'}">
+      ${q.isOver?'+':'-'}${hh}h${mm>0?' '+mm+'m':''}
+      <span class="q-tag">${q.isOver?'초과':'미달'}</span>
+    </div>`;
+  }).join('');
+  const row3=allQ.map(q=>{
+    return`<div class="q-cell ${q.leaveDays>0?'is-leave':'is-under'}">
+      ${q.leaveDays>0?q.leaveDays:'0'}<span>일</span>
+    </div>`;
+  }).join('');
+
+  // 연간 총 보상휴가
+  const totalLeaveH=allQ.reduce((s,q)=>s+(q.isOver?q.diffH:0),0);
+  const totalLeaveDays=Math.round(totalLeaveH/8*10)/10;
+  const totalLeaveInt=Math.floor(totalLeaveDays);
+  const totalLeaveRem=Math.round((totalLeaveDays-totalLeaveInt)*10)/10;
+
+  document.getElementById('q-annual-view').innerHTML=`
+  <div class="q-chart-card">
+    <div class="q-chart-header">
+      <span class="q-chart-title">분기별 주52시간 정산 — ${year}년</span>
+      <span class="q-chart-sub">기준 677.81h = 52h × 4.345주 × 3개월</span>
+    </div>
+    ${svgStr}
+    <div class="q-data-table">
+      <div class="q-data-row">
+        <div class="q-row-lbl">총 근무시간</div>${row1}
+      </div>
+      <div class="q-data-row">
+        <div class="q-row-lbl">기준 대비</div>${row2}
+      </div>
+      <div class="q-data-row">
+        <div class="q-row-lbl">보상 휴가</div>${row3}
+      </div>
+    </div>
+    ${totalLeaveDays>0?`
+    <div class="q-total-leave-bar">
+      <span class="ql-label">${year}년 대체휴무 발생일</span>
+      <span class="ql-val">${totalLeaveInt}<span class="ql-unit">일${totalLeaveRem>0?' '+totalLeaveRem+'h':''}</span></span>
+    </div>`:''}
+  </div>`;
+
+  // 상세 패널이 열려있으면 같이 갱신
+  if(document.getElementById('q-detail-wrap').style.display!=='none') renderQDetail();
+}
+
+function renderQDetail(){
+  const db=loadDB();
+  const year=parseInt(document.getElementById('qY').value||new Date().getFullYear());
+  const q=parseInt(document.getElementById('qQ')?.value||1);
+  const qMonths={
+    1:[{y:year-1,m:12},{y:year,m:1},{y:year,m:2}],
+    2:[{y:year,m:3},{y:year,m:4},{y:year,m:5}],
+    3:[{y:year,m:6},{y:year,m:7},{y:year,m:8}],
+    4:[{y:year,m:9},{y:year,m:10},{y:year,m:11}],
+  };
+  const qLabels={1:`${year-1}년 12월 ~ ${year}년 2월`,2:`${year}년 3~5월`,3:`${year}년 6~8월`,4:`${year}년 9~11월`};
+  const byM=qMonths[q].map(({y,m})=>{
     const weeks=Object.values(db).filter(d=>d.year===y&&d.month===m);
-    return{
-      y, m, workMin:weeks.reduce((s,d)=>s+(d.totalWorkMin||0),0),
+    return{y,m,
+      workMin:weeks.reduce((s,d)=>s+(d.totalWorkMin||0),0),
       weekCnt:weeks.length,
       eveCnt:weeks.reduce((s,d)=>s+(d.meal?.eveCnt||0),0),
       eveAmt:weeks.reduce((s,d)=>s+(d.meal?.eveAmt||0),0),
@@ -2120,7 +2329,6 @@ function renderQuarter(){
       wkdAmt:weeks.reduce((s,d)=>s+(d.meal?.wkdAmt||0),0),
     };
   });
-
   const totW=byM.reduce((s,m)=>s+m.workMin,0);
   const totEve=byM.reduce((s,m)=>s+m.eveAmt,0);
   const totWkd=byM.reduce((s,m)=>s+m.wkdAmt,0);
@@ -2139,28 +2347,21 @@ function renderQuarter(){
       <div class="ks">${totWkd>0?won(totWkd):'없음'}</div></div>
     <div class="kpi hi-total"><div class="kl">식대 합계</div>
       <div class="kv">${totMealCnt}<span style="font-size:13px;font-weight:400">회</span></div>
-      <div class="ks" style="font-weight:600;color:var(--green)">${totMealCnt>0?won(totMeal):'없음'}</div></div>
-  `;
+      <div class="ks" style="font-weight:600;color:var(--green)">${totMealCnt>0?won(totMeal):'없음'}</div></div>`;
 
-  // 월별 테이블
   const tbl=document.getElementById('q-mtbl');
-  tbl.innerHTML=`<thead><tr>
-    <th>월</th><th>기록주수</th><th>근무시간</th>
+  tbl.innerHTML=`<thead><tr><th>월</th><th>기록주수</th><th>근무시간</th>
     <th style="color:#c05800">저녁식대</th><th style="color:var(--purple)">주말식대</th>
-    <th style="color:var(--green)">식대합계</th>
-  </tr></thead>`;
+    <th style="color:var(--green)">식대합계</th></tr></thead>`;
   const tbody=document.createElement('tbody');
   byM.forEach(m=>{
     const mCnt=m.eveCnt+m.wkdCnt,mAmt=m.eveAmt+m.wkdAmt;
     const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="font-weight:500">${m.y!==year?m.y+"년 "+m.m:m.m}월</td>
-      <td style="color:var(--tx2)">${m.weekCnt}주</td>
-      <td>${m2s(m.workMin)}</td>
+    tr.innerHTML=`<td style="font-weight:500">${m.y!==year?m.y+"년 "+m.m:m.m}월</td>
+      <td style="color:var(--tx2)">${m.weekCnt}주</td><td>${m2s(m.workMin)}</td>
       <td>${m.eveCnt>0?`<span style="color:#c05800">${m.eveCnt}회·${won(m.eveAmt)}</span>`:'-'}</td>
       <td>${m.wkdCnt>0?`<span style="color:var(--purple)">${m.wkdCnt}회·${won(m.wkdAmt)}</span>`:'-'}</td>
-      <td style="font-weight:600;color:var(--green)">${mCnt>0?`${mCnt}회·${won(mAmt)}`:'-'}</td>
-    `;
+      <td style="font-weight:600;color:var(--green)">${mCnt>0?`${mCnt}회·${won(mAmt)}`:'-'}</td>`;
     tbody.appendChild(tr);
   });
   const sumTr=document.createElement('tr');sumTr.className='sum-row';
@@ -2169,7 +2370,6 @@ function renderQuarter(){
     <td style="color:var(--green)">${totMeal>0?won(totMeal):'-'}</td>`;
   tbody.appendChild(sumTr);tbl.appendChild(tbody);
 
-  // 바 차트
   const maxW=Math.max(...byM.map(m=>m.workMin),1);
   document.getElementById('q-bar').innerHTML=byM.map(m=>{
     const pct=Math.round((m.workMin/maxW)*100);
