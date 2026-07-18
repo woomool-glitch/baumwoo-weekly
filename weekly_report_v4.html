@@ -1202,7 +1202,9 @@ function updateTotals(){
     const dow=r.date.getDay();
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
     const wm=calcWork(effectiveInM(inM,r.date,r.holiday),outM,restM);
-    if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
+    if(wm!=null){tw+=wm;hw=true;}
+    if(inM!=null&&outM!=null){tr2+=restM;hr=true;}
+    const meal=calcMeal(inM,outM,dow,r.holiday);
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
   });
 
