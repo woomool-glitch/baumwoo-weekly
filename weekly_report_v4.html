@@ -216,17 +216,17 @@ label.ab{display:inline-flex;align-items:center}
 /* 분기 통계 그리드 */
 .q-stat-grid{display:grid;grid-template-columns:64px repeat(4,1fr);border-top:1px solid #F3F4F6}
 .q-stat-lbl-col{background:#FAFAFA;border-right:1px solid #F3F4F6;display:flex;flex-direction:column}
-.q-stat-lbl-hd{height:48px;border-bottom:1px solid #F3F4F6}
-.q-stat-lbl-cell{display:flex;align-items:center;padding:0 10px;font-size:9.5px;font-weight:700;color:#9CA3AF;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid #F3F4F6;min-height:56px}
-.q-stat-lbl-cell:last-child{border-bottom:none;min-height:54px}
+.q-stat-lbl-hd{height:44px;border-bottom:1px solid #F3F4F6}
+.q-stat-lbl-cell{display:flex;align-items:center;padding:0 10px;font-size:9px;font-weight:700;color:#9CA3AF;letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid #F3F4F6;height:52px;box-sizing:border-box}
+.q-stat-lbl-cell:last-child{border-bottom:none}
 .q-stat-col{display:flex;flex-direction:column;border-right:1px solid #F3F4F6;transition:background .15s}
 .q-stat-col:last-child{border-right:none}
-.q-stat-col-hd{padding:10px 4px 8px;text-align:center;border-bottom:1px solid #F3F4F6;background:#FAFAFA;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.q-stat-col-hd .qch-name{font-size:11.5px;font-weight:700;color:#374151}
+.q-stat-col-hd{text-align:center;border-bottom:1px solid #F3F4F6;background:#FAFAFA;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box}
+.q-stat-col-hd .qch-name{font-size:10.5px;font-weight:700;color:#374151}
 .q-stat-col-hd .qch-period{font-size:9px;color:#9CA3AF;margin-top:2px}
-.q-stat-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 4px;text-align:center;border-bottom:1px solid #F3F4F6;min-height:56px}
-.q-stat-cell:last-child{border-bottom:none;min-height:54px}
-.q-stat-cell .qsc-num{font-size:17px;font-weight:700;color:#111827;line-height:1.1;letter-spacing:-.02em}
+.q-stat-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;text-align:center;border-bottom:1px solid #F3F4F6;height:52px;box-sizing:border-box}
+.q-stat-cell:last-child{border-bottom:none}
+.q-stat-cell .qsc-num{font-size:15px;font-weight:700;color:#111827;line-height:1.1;letter-spacing:-.02em}
 .q-stat-cell .qsc-unit{font-size:10px;color:#9CA3AF;margin-top:2px}
 .q-stat-cell .qsc-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;margin-top:4px;display:inline-block}
 .qsc-badge.over{background:#FEE2E2;color:#DC2626}
@@ -770,7 +770,7 @@ function isON(inM,outM){return inM!=null&&outM!=null&&outM<inM;}
 function m2s(m){
   if(m==null||isNaN(m)||m<0)return'-';
   const h=Math.floor(m/60),mm=m%60;
-  return mm===0?h+'시간':h+'시간 '+mm+'분';
+  return mm===0?h+'시간':h+'시간 '+String(mm).padStart(2,'0')+'분';
 }
 function m2hhmm(m){
   if(m==null)return'';
@@ -2181,59 +2181,57 @@ function renderQuarter(){
   });
 
   // ── SVG 세로 막대 차트 ──
-  const maxH=Math.max(...allQ.map(q=>q.actH), QUOTA_H)*1.18;
+  const maxH=Math.max(...allQ.map(q=>q.actH), 800); // 800h 고정 상한 (여유 확보)
   const VW=500, VH=210;
-  const ML=48,MR=12,MT=26,MB=42;
+  const ML=44,MR=12,MT=24,MB=42;
   const CW=VW-ML-MR, CH=VH-MT-MB;
   const BotY=MT+CH, TopY=MT;
   const secW=CW/4;
-  const barW=Math.min(60,secW*0.45);
+  const barW=Math.min(28,secW*0.26); // 바 두께 절반
   const toY=(h)=>BotY-(h/maxH)*CH;
-  const baseY=toY(QUOTA_H);
+  const baseY=toY(677.81);
 
-  // ─ 레이어 1: 그리드 선 (가장 아래)
+  // ─ 레이어 1: 그리드 선 (400, 600, 800만 — 200 생략)
   let layer1='';
-  layer1+=`<rect x="${ML}" y="${TopY}" width="${CW}" height="${CH}" fill="#FAFBFC" rx="0"/>`;
-  [200,400,600].forEach(gh=>{
+  layer1+=`<rect x="${ML}" y="${TopY}" width="${CW}" height="${CH}" fill="#FAFBFC"/>`;
+  [400,600,800].forEach(gh=>{
     const gy=toY(gh);
     if(gy>=TopY&&gy<=BotY){
-      layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${gy}" y2="${gy}" stroke="#E5E7EB" stroke-width="1"/>`;
-      layer1+=`<text x="${ML-5}" y="${gy}" text-anchor="end" font-size="8.5" fill="#9CA3AF" dominant-baseline="middle">${gh}</text>`;
+      layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${gy}" y2="${gy}" stroke="#ECEFF4" stroke-width="1"/>`;
+      layer1+=`<text x="${ML-4}" y="${gy}" text-anchor="end" font-size="8" fill="#C1C9D4" dominant-baseline="middle">${gh}</text>`;
     }
   });
-  layer1+=`<line x1="${ML}" x2="${ML}" y1="${TopY}" y2="${BotY}" stroke="#D1D5DB" stroke-width="1"/>`;
-  layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${BotY}" y2="${BotY}" stroke="#D1D5DB" stroke-width="1"/>`;
+  layer1+=`<line x1="${ML}" x2="${ML}" y1="${TopY}" y2="${BotY}" stroke="#E8ECF0" stroke-width="1"/>`;
+  layer1+=`<line x1="${ML}" x2="${VW-MR}" y1="${BotY}" y2="${BotY}" stroke="#E8ECF0" stroke-width="1"/>`;
 
   // ─ 레이어 2: 막대
   let layer2='';
   allQ.forEach((q,i)=>{
     const cx=ML+i*secW+secW/2;
     const bx=cx-barW/2;
-    const normalH=Math.min(q.actH,QUOTA_H);
-    const overH=Math.max(0,q.actH-QUOTA_H);
+    const normalH=Math.min(q.actH,677.81);
+    const overH=Math.max(0,q.actH-677.81);
     const normalPx=(normalH/maxH)*CH;
     const overPx=(overH/maxH)*CH;
     const normalY=BotY-normalPx;
     const overY=normalY-overPx;
-    // 일반 구간
-    if(normalPx>0.5) layer2+=`<rect x="${bx}" y="${normalY}" width="${barW}" height="${normalPx}" fill="url(#gBlue)" rx="4" filter="url(#bshadow)"/>`;
-    // 초과 구간
-    if(overPx>0.5) layer2+=`<rect x="${bx}" y="${overY}" width="${barW}" height="${overPx}" fill="url(#gRed)" rx="4"/>`;
-    // 수치 레이블 (막대 위)
+    if(normalPx>0.5) layer2+=`<rect x="${bx}" y="${normalY}" width="${barW}" height="${normalPx}" fill="url(#gBlue)" rx="3" filter="url(#bshadow)"/>`;
+    if(overPx>0.5) layer2+=`<rect x="${bx}" y="${overY}" width="${barW}" height="${overPx}" fill="url(#gRed)" rx="3"/>`;
+    // 수치 레이블
     if(q.actH>0){
       const lY=(overPx>0.5?overY:normalY)-5;
       const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
-      layer2+=`<text x="${cx}" y="${lY}" text-anchor="middle" font-size="9" fill="${q.isOver?'#DC2626':'#2563EB'}" font-weight="700">${hh}h${mm>0?' '+mm+'m':''}</text>`;
+      layer2+=`<text x="${cx}" y="${lY}" text-anchor="middle" font-size="8" fill="${q.isOver?'#B91C1C':'#1D4ED8'}" font-weight="700">${hh}h${mm>0?' '+mm+'m':''}</text>`;
     }
-    // 하단 분기/기간 레이블
-    layer2+=`<text x="${cx}" y="${BotY+14}" text-anchor="middle" font-size="10.5" fill="#374151" font-weight="700">${q.q}분기</text>`;
-    layer2+=`<text x="${cx}" y="${BotY+27}" text-anchor="middle" font-size="8.5" fill="#9CA3AF">${['12~2월','3~5월','6~8월','9~11월'][i]}</text>`;
+    // 하단 레이블
+    layer2+=`<text x="${cx}" y="${BotY+12}" text-anchor="middle" font-size="9.5" fill="#374151" font-weight="700">${q.q}분기</text>`;
+    layer2+=`<text x="${cx}" y="${BotY+23}" text-anchor="middle" font-size="8" fill="#9CA3AF">(${['12~2월','3~5월','6~8월','9~11월'][i]})</text>`;
   });
 
-  // ─ 레이어 3: 기준선 (맨 위 — 막대 위에 그려짐)
+  // ─ 레이어 3: 기준선 — 얇고 세련된 점선
   let layer3='';
-  layer3+=`<line x1="${ML}" x2="${VW-MR}" y1="${baseY}" y2="${baseY}" stroke="#374151" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.7"/>`;
-  layer3+=`<text x="${ML-5}" y="${baseY}" text-anchor="end" font-size="8.5" fill="#374151" font-weight="700" dominant-baseline="middle">677.81</text>`;
+  layer3+=`<line x1="${ML}" x2="${VW-MR}" y1="${baseY}" y2="${baseY}" stroke="#94A3B8" stroke-width="1" stroke-dasharray="3,4"/>`;
+  layer3+=`<text x="${ML-4}" y="${baseY}" text-anchor="end" font-size="7.5" fill="#64748B" font-weight="700" dominant-baseline="middle">677.81</text>`;
 
   const svgStr=`<svg viewBox="0 0 ${VW} ${VH}" width="100%" style="display:block;padding:0 2px">
     <defs>
@@ -2257,29 +2255,26 @@ function renderQuarter(){
   const qPeriods=['12~2월','3~5월','6~8월','9~11월'];
 
   const statCols=allQ.map((q,i)=>{
-    // 총 근무시간
     const hh=Math.floor(q.actH),mm=Math.round(q.totW%60);
     const workCell=q.totW>0
-      ?`<div class="qsc-num">${hh}<span style="font-size:11px;font-weight:500;color:#6B7280">h</span> ${mm}<span style="font-size:11px;font-weight:500;color:#6B7280">m</span></div>`
+      ?`<div class="qsc-num">${hh}<span style="font-size:10px;font-weight:500;color:#6B7280">h</span> ${mm}<span style="font-size:10px;font-weight:500;color:#6B7280">m</span></div>`
       :`<div class="qsc-num c-under">—</div>`;
-    // 기준 대비
     const ah=Math.abs(q.diffH),dh=Math.floor(ah),dm=Math.round((ah-dh)*60);
     const diffCell=q.totW===0
       ?`<div class="qsc-num c-under">—</div>`
-      :`<div class="qsc-num ${q.isOver?'c-over':'c-under'}">${q.isOver?'+':'-'}${dh}<span style="font-size:11px;font-weight:500">h</span>${dm>0?` ${dm}<span style="font-size:11px">m</span>`:''}</div>
+      :`<div class="qsc-num ${q.isOver?'c-over':'c-under'}">${q.isOver?'+':'-'}${dh}<span style="font-size:10px;font-weight:500">h</span>${dm>0?` ${dm}<span style="font-size:10px">m</span>`:''}</div>
        <span class="qsc-badge ${q.isOver?'over':'under'}">${q.isOver?'초과':'미달'}</span>`;
-    // 보상 휴가
     const leaveCell=q.leaveDays>0
-      ?`<div class="qsc-num c-leave">${q.leaveDays}</div><span class="qsc-badge leave">일</span>`
-      :`<div class="qsc-num c-under">0</div><span class="qsc-badge under">일</span>`;
+      ?`<div class="qsc-num c-leave" style="display:flex;align-items:baseline;gap:2px">${q.leaveDays}<span style="font-size:12px;font-weight:600;color:#15803D">일</span></div>`
+      :`<div class="qsc-num c-under" style="display:flex;align-items:baseline;gap:2px">0<span style="font-size:12px;font-weight:500;color:#9CA3AF">일</span></div>`;
     return`<div class="q-stat-col">
       <div class="q-stat-col-hd">
         <div class="qch-name">${qNames[i]}</div>
-        <div class="qch-period">${qPeriods[i]}</div>
+        <div class="qch-period">(${qPeriods[i]})</div>
       </div>
-      <div class="q-stat-cell">${workCell}<div class="qsc-unit">총 근무시간</div></div>
-      <div class="q-stat-cell">${diffCell}<div class="qsc-unit">기준 대비</div></div>
-      <div class="q-stat-cell">${leaveCell}<div class="qsc-unit">보상 휴가</div></div>
+      <div class="q-stat-cell">${workCell}</div>
+      <div class="q-stat-cell">${diffCell}</div>
+      <div class="q-stat-cell">${leaveCell}</div>
     </div>`;
   }).join('');
 
@@ -2564,10 +2559,14 @@ function importDB(input){
     // textarea
     const ta=td.querySelector('textarea');
     if(ta) return ta.value.trim();
-    // input (출근/퇴근/휴게)
+    // input
     const inp=td.querySelector('input');
     if(inp){
-      // 휴게시간: input + '시간' → "1시간" 형태
+      // 휴게시간(data-f="rest"): 숫자+"시간" 형태로 강제 반환
+      if(inp.dataset.f==='rest'){
+        const v=parseFloat(inp.value);
+        return isNaN(v)?'':v+'시간';
+      }
       const span=td.querySelector('span');
       return inp.value.trim()+(span?span.textContent.trim():'');
     }
