@@ -688,6 +688,8 @@ function getMonday(d){const dt=new Date(d);const day=dt.getDay();dt.setDate(dt.g
 function fmtFull(d){return`${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;}
 function fmtDay(d){return String(d.getDate()).padStart(2,'0')+'일';}
 function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// ISO 날짜 문자열("YYYY-MM-DD")을 로컬 시간 기준으로 파싱 (UTC 파싱으로 인한 시간대 오류 방지)
+function parseLocalDate(s){if(!s)return null;const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
 function wNum(d){return Math.ceil(d.getDate()/7);}
 
 /* ═══════════════════════════════════
@@ -1560,7 +1562,7 @@ function exportMonth(){
   let allData=[[`${y}년 ${m}월 월간 업무일지`],[]];
   let totW=0,totR=0,totMC=0,totMA=0;
   weeks.forEach(sv=>{
-    const mon=new Date(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+    const mon=parseLocalDate(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     allData.push([`${sv.week}주차  ${fmtFull(mon)} ~ ${fmtFull(sun)}`]);
     allData.push(['날짜','요일','업무내용','업무시간합계','휴게시간','비고','식대']);
     let ww=0,wr=0,wc=0,wa=0;
@@ -1651,7 +1653,7 @@ function renderMonthly(){
   const OT_WEEK=52*60;
   Object.values(db).forEach(sv=>{
     if(!sv.days)return;
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     let wkMin=0;
     sv.days.forEach((d,idx)=>{
       if(d.extra||!mon)return;
@@ -1762,7 +1764,7 @@ function renderMonthlySummary(year, month){
   // 모든 저장 주차 순회
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = new Date(sv.monday);
+    const mon = parseLocalDate(sv.monday);
     let weekWorkMin = 0; // 이 주차 중 해당 월에 속하는 날들의 근무시간 합
 
     sv.days.forEach((d, idx)=>{
@@ -1870,7 +1872,7 @@ function renderDetailByWeek(data){
   </tr></thead>`;
   const tbody=document.createElement('tbody');
   data.forEach(sv=>{
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
     if(tbody.children.length>0){
@@ -1926,7 +1928,7 @@ function renderDetailByMonth(year, month, db){
   const dayMap={};
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     sv.days.forEach((d,idx)=>{
       if(d.extra) return;
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
@@ -1993,7 +1995,7 @@ function renderTaskList(year, month, db){
 
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = new Date(sv.monday);
+    const mon = parseLocalDate(sv.monday);
     sv.days.forEach((d, idx)=>{
       if(d.extra) return;
       const dd = new Date(mon); dd.setDate(dd.getDate()+idx);
@@ -2706,7 +2708,7 @@ function showCalWeeks(month){
 }
 
 function goWeek(key){
-  curMon=getMonday(new Date(key));
+  curMon=getMonday(parseLocalDate(key));
   buildRows();renderTable();
   closeAllCals();
   if(xlsData.length)refreshPreview();
