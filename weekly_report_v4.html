@@ -146,6 +146,13 @@ table.rt td.task-cell:hover::before{background:rgba(18,100,204,0.08)}
 col.cd{width:30px}col.cw{width:30px}col.ct{width:54px}col.co{width:70px}col.cr{width:55px}col.cn{width:110px}col.cm{width:76px}
 .dc{text-align:center;font-weight:600;white-space:nowrap}
 .wc{text-align:center;font-size:12px;font-weight:500;color:var(--tx2);white-space:nowrap}
+/* 공휴일 토글 */
+.hol-toggle{display:inline-flex;align-items:center;gap:3px;cursor:pointer;border-radius:3px;padding:1px 3px;transition:background .12s}
+.hol-toggle:hover{background:rgba(245,158,11,.12)}
+.hol-badge{display:none;font-size:8px;font-weight:700;background:#f59e0b;color:#fff;padding:1px 4px;border-radius:3px;line-height:1.4}
+tr.hol-row .hol-badge{display:inline}
+tr.hol-row .dc,.wc-hol{color:#d97706!important}
+tr.hol-row td{background:rgba(245,158,11,.04)!important}
 .nc{text-align:center;white-space:nowrap}
 .mc{text-align:center;white-space:nowrap;font-size:11px}
 tr.sat td,tr.sat .dc,tr.sat .wc{color:var(--blue)!important}
@@ -688,8 +695,6 @@ function getMonday(d){const dt=new Date(d);const day=dt.getDay();dt.setDate(dt.g
 function fmtFull(d){return`${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;}
 function fmtDay(d){return String(d.getDate()).padStart(2,'0')+'일';}
 function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-// ISO 날짜 문자열("YYYY-MM-DD")을 로컬 시간 기준으로 파싱 (UTC 파싱으로 인한 시간대 오류 방지)
-function parseLocalDate(s){if(!s)return null;const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
 function wNum(d){return Math.ceil(d.getDate()/7);}
 
 /* ═══════════════════════════════════
@@ -782,28 +787,7 @@ function parseDate(v){
     const mon=parseInt(mKor[1])-1,day=parseInt(mKor[2]),y=curMon.getFullYear();
     const d=new Date(y,mon,day);if(d.getDate()===day)return d;return null;
   }
-  const DOW_KR={일:0,월:1,화:2,수:3,목:4,금:5,토:6};
-  const mDay=s.match(/^(\d{1,2})일(?:\(([월화수목금토일])\))?/);
-  if(mDay){
-    const day=parseInt(mDay[1]);
-    const dowTag=mDay[2]; // "수","목" 등 요일 태그 (있을 수도 없을 수도)
-    if(dowTag!==undefined&&DOW_KR[dowTag]!==undefined){
-      // 요일 태그가 있으면 그 요일에 맞는 날짜만 후보로
-      const targetDow=DOW_KR[dowTag];
-      const y=curMon.getFullYear(),m=curMon.getMonth();
-      const mk2=fmtKey(curMon);
-      const sun2=new Date(curMon);sun2.setDate(sun2.getDate()+6);
-      const sk2=fmtKey(sun2);
-      const cands=[new Date(y,m,day),new Date(y,m-1,day),new Date(y,m+1,day)]
-        .filter(d=>d.getDate()===day&&d.getDay()===targetDow);
-      if(!cands.length)return null;
-      if(cands.length===1)return cands[0];
-      const inW=cands.find(d=>fmtKey(d)>=mk2&&fmtKey(d)<=sk2);
-      if(inW)return inW;
-      return cands.reduce((b,c)=>Math.abs(c-curMon)<Math.abs(b-curMon)?c:b);
-    }
-    return dayOnlyToDate(day);
-  }
+  const mDay=s.match(/^(\d{1,2})일/);if(mDay)return dayOnlyToDate(parseInt(mDay[1]));
   if(/^\d{1,2}$/.test(s)){const d=parseInt(s);if(d>=1&&d<=31)return dayOnlyToDate(d);}
   let norm=s.replace(/\./g,'-').replace(/\//g,'-');
   if(/^\d{2}-\d{2}-\d{2}$/.test(norm))norm='20'+norm;
@@ -1002,7 +986,27 @@ function renderHeader(){
     `${fmtFull(curMon)} 월요일 ~ ${fmtFull(sun)} 일요일`;
   updateDocTitle();
 }
-function updateDocTitle(){
+function toggleHoliday(i){
+  if(!rows[i]||rows[i].extra||!rows[i].date)return;
+  const dow=rows[i].date.getDay();
+  // 주말은 이미 공휴일 처리되므로 평일에만 토글
+  if(dow===6||dow===0){return;}
+  rows[i].holiday=!rows[i].holiday;
+  // 공휴일 지정 시 수동 휴게시간 초기화 후 재계산
+  rows[i].manualRest=false;
+  updateRow(i);
+  updateTotals();
+  // hol-row 클래스 업데이트
+  const tr=document.querySelector(`#tbody tr[data-row="${i}"]`)||
+            document.querySelector(`#tbody tr:nth-child(${i+1})`);
+  // renderTable이 이미 tr를 갱신하므로 DOM 직접 업데이트
+  const trEl=document.getElementById('tbody')?.children[i];
+  if(trEl){
+    rows[i].holiday?trEl.classList.add('hol-row'):trEl.classList.remove('hol-row');
+  }
+}
+
+
   const y=String(curMon.getFullYear()).slice(2);
   const m=curMon.getMonth()+1;
   const w=wNum(curMon);
@@ -1059,6 +1063,8 @@ function renderTable(){
     const ot=isON(inM,outM);
     const meal=calcMeal(inM,outM,dow,r.holiday);
     if(dow===6)tr.classList.add('sat');else if(dow===0)tr.classList.add('sun');
+    if(r.holiday&&dow!==6&&dow!==0)tr.classList.add('hol-row');
+    else tr.classList.remove('hol-row');
     if(ot)tr.classList.add('otr');
     if(r.imp) tr.classList.add('imp');
 
@@ -1074,7 +1080,9 @@ function renderTable(){
     const outDisp  = noWork ? '-' : esc(r.outTime);
 
     tr.innerHTML=`
-      <td class="dc selectable" data-row="${i}" data-col="0">${fmtDay(r.date)}</td>
+      <td class="dc selectable" data-row="${i}" data-col="0">
+        <span class="hol-toggle" onclick="toggleHoliday(${i})" title="클릭 시 공휴일 지정/해제">${fmtDay(r.date)}<span class="hol-badge">공</span></span>
+      </td>
       <td class="wc selectable" data-row="${i}" data-col="1">${DAYS[dow]}</td>
       <td class="task-cell selectable" data-row="${i}" data-col="2"><textarea class="task-inp" placeholder="${(dow===6||dow===0)?'':'업무내용 입력'}" data-i="${i}" data-f="task" rows="1" onInput="autoResize(this)">${esc(r.task)}</textarea></td>
       <td class="tc selectable" data-row="${i}" data-col="3" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp${r.imp?' auto':''}" id="in-${i}" value="${inDisp}" placeholder="09:00" maxlength="5" data-i="${i}" data-f="inTime" style="width:100%">`}</td>
@@ -1198,7 +1206,10 @@ function updateRow(i){
     mlc.innerHTML=meal.count>0?`<span class="meal-badge meal-${meal.type}">${won(meal.amt)}</span>`:'';
   }
   const tr=document.querySelectorAll('#tbody tr')[i];
-  if(tr){ot?tr.classList.add('otr'):tr.classList.remove('otr');}
+  if(tr){
+    ot?tr.classList.add('otr'):tr.classList.remove('otr');
+    (r.holiday&&dow!==6&&dow!==0)?tr.classList.add('hol-row'):tr.classList.remove('hol-row');
+  }
   updateTotals();
 }
 
@@ -1562,7 +1573,7 @@ function exportMonth(){
   let allData=[[`${y}년 ${m}월 월간 업무일지`],[]];
   let totW=0,totR=0,totMC=0,totMA=0;
   weeks.forEach(sv=>{
-    const mon=parseLocalDate(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+    const mon=new Date(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     allData.push([`${sv.week}주차  ${fmtFull(mon)} ~ ${fmtFull(sun)}`]);
     allData.push(['날짜','요일','업무내용','업무시간합계','휴게시간','비고','식대']);
     let ww=0,wr=0,wc=0,wa=0;
@@ -1653,7 +1664,7 @@ function renderMonthly(){
   const OT_WEEK=52*60;
   Object.values(db).forEach(sv=>{
     if(!sv.days)return;
-    const mon=parseLocalDate(sv.monday);
+    const mon=new Date(sv.monday);
     let wkMin=0;
     sv.days.forEach((d,idx)=>{
       if(d.extra||!mon)return;
@@ -1764,7 +1775,7 @@ function renderMonthlySummary(year, month){
   // 모든 저장 주차 순회
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = parseLocalDate(sv.monday);
+    const mon = new Date(sv.monday);
     let weekWorkMin = 0; // 이 주차 중 해당 월에 속하는 날들의 근무시간 합
 
     sv.days.forEach((d, idx)=>{
@@ -1872,7 +1883,7 @@ function renderDetailByWeek(data){
   </tr></thead>`;
   const tbody=document.createElement('tbody');
   data.forEach(sv=>{
-    const mon=parseLocalDate(sv.monday);
+    const mon=new Date(sv.monday);
     const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
     if(tbody.children.length>0){
@@ -1928,7 +1939,7 @@ function renderDetailByMonth(year, month, db){
   const dayMap={};
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon=parseLocalDate(sv.monday);
+    const mon=new Date(sv.monday);
     sv.days.forEach((d,idx)=>{
       if(d.extra) return;
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
@@ -1995,7 +2006,7 @@ function renderTaskList(year, month, db){
 
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = parseLocalDate(sv.monday);
+    const mon = new Date(sv.monday);
     sv.days.forEach((d, idx)=>{
       if(d.extra) return;
       const dd = new Date(mon); dd.setDate(dd.getDate()+idx);
@@ -2708,7 +2719,7 @@ function showCalWeeks(month){
 }
 
 function goWeek(key){
-  curMon=getMonday(parseLocalDate(key));
+  curMon=getMonday(new Date(key));
   buildRows();renderTable();
   closeAllCals();
   if(xlsData.length)refreshPreview();
