@@ -213,6 +213,34 @@ label.ab{display:inline-flex;align-items:center}
 .mon-sel{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 .mon-sel select{border:1px solid var(--bd2);background:var(--bg);color:var(--tx);padding:6px 10px;font-size:12px;font-weight:500;font-family:inherit}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+/* 분기별 주52시간 OT 카드 */
+.ot-card{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;margin-bottom:4px}
+.ot-card-head{padding:14px 18px 10px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #F3F4F6}
+.ot-card-title{font-size:13px;font-weight:700;color:#111827}
+.ot-card-sub{font-size:10px;color:#9CA3AF}
+.ot-track-row{padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.ot-track-item{display:flex;align-items:center;gap:10px}
+.ot-track-label{font-size:10px;font-weight:700;color:#9CA3AF;width:32px;text-align:right;flex-shrink:0}
+.ot-track-bar{flex:1;height:18px;background:#F3F4F6;border-radius:4px;overflow:hidden;position:relative}
+.ot-track-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.ot-track-fill.quota{background:linear-gradient(90deg,#BFDBFE,#93C5FD)}
+.ot-track-fill.actual-ok{background:linear-gradient(90deg,#60A5FA,#2563EB)}
+.ot-track-fill.actual-over{background:linear-gradient(90deg,#FCA5A5,#DC2626)}
+.ot-track-marker{position:absolute;top:0;bottom:0;width:2px;background:#2563EB;opacity:.5}
+.ot-track-val{font-size:11px;font-weight:700;color:#374151;white-space:nowrap;width:90px;flex-shrink:0}
+.ot-kpi3{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #F3F4F6}
+.ot-kpi3-item{padding:14px 12px;text-align:center;border-right:1px solid #F3F4F6}
+.ot-kpi3-item:last-child{border-right:none}
+.ot-kpi3-label{font-size:9px;font-weight:700;color:#9CA3AF;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.ot-kpi3-val{font-size:20px;font-weight:800;color:#111827;line-height:1;letter-spacing:-.02em}
+.ot-kpi3-val span{font-size:11px;font-weight:400;color:#9CA3AF}
+.ot-kpi3-val.c-over{color:#DC2626}
+.ot-kpi3-val.c-under{color:#9CA3AF}
+.ot-kpi3-val.c-leave{color:#16A34A}
+.ot-kpi3-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:4px}
+.ot-kpi3-badge.over{background:#FEE2E2;color:#DC2626}
+.ot-kpi3-badge.under{background:#F3F4F6;color:#6B7280}
+.ot-kpi3-badge.leave{background:#DCFCE7;color:#15803D}
 .kpi{background:var(--bg2);padding:14px 16px;border-top:2px solid var(--bd)}
 .kpi .kl{font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase}
 .kpi .kv{font-size:22px;font-weight:700;line-height:1.2;letter-spacing:-0.02em}
@@ -662,7 +690,9 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
         <option value="4">4분기 (9~11월)</option>
       </select>
     </div>
-    <div class="kpi-grid" id="q-kpi"></div>
+    <!-- 주52시간 오버타임 대시보드 -->
+    <div id="q-ot-card"></div>
+    <div class="kpi-grid" id="q-kpi" style="margin-top:14px"></div>
     <div class="shd" style="margin-top:4px">월별 상세</div>
     <div style="overflow-x:auto"><table class="mtbl" id="q-mtbl"></table></div>
     <div class="shd">월별 업무시간</div>
@@ -2190,6 +2220,62 @@ function renderQuarter(){
   const totWkd=byM.reduce((s,m)=>s+m.wkdAmt,0);
   const totMeal=totEve+totWkd;
   const totMealCnt=byM.reduce((s,m)=>s+m.eveCnt+m.wkdCnt,0);
+
+  // ── 주52시간 오버타임 계산 ──
+  const QUOTA_H=677.81, QUOTA_MIN=Math.round(QUOTA_H*60);
+  const actH=totW/60;
+  const diffMin=totW-QUOTA_MIN;
+  const diffH=diffMin/60;
+  const isOver=diffMin>0;
+  const maxH=Math.max(actH,QUOTA_H);
+  const quotaPct=Math.round((QUOTA_H/maxH)*100);
+  const actPct=Math.round((actH/maxH)*100);
+  const leaveDays=isOver?Math.round(diffH/8*10)/10:0;
+  const dh=Math.floor(Math.abs(diffH)), dm=Math.round(Math.abs(diffMin)%60);
+
+  // OT 카드
+  const otCard=document.getElementById('q-ot-card');
+  if(otCard) otCard.innerHTML=`
+  <div class="ot-card">
+    <div class="ot-card-head">
+      <span class="ot-card-title">${q}분기 주52시간 정산 <span style="font-size:11px;color:#6B7280;font-weight:400">${qLabels[q]}</span></span>
+      <span class="ot-card-sub">기준 677.81h = 52h × 4.345주 × 3개월</span>
+    </div>
+    <div class="ot-track-row">
+      <div class="ot-track-item">
+        <span class="ot-track-label">기준</span>
+        <div class="ot-track-bar">
+          <div class="ot-track-fill quota" style="width:${quotaPct}%"></div>
+        </div>
+        <span class="ot-track-val" style="color:#9CA3AF">${QUOTA_H}h</span>
+      </div>
+      <div class="ot-track-item">
+        <span class="ot-track-label">실적</span>
+        <div class="ot-track-bar">
+          <div class="ot-track-fill ${isOver?'actual-over':'actual-ok'}" style="width:${actPct}%"></div>
+          ${actH>0?`<div class="ot-track-marker" style="left:${quotaPct}%"></div>`:''}
+        </div>
+        <span class="ot-track-val">${m2s(totW)}</span>
+      </div>
+    </div>
+    <div class="ot-kpi3">
+      <div class="ot-kpi3-item">
+        <div class="ot-kpi3-label">분기 총 근무</div>
+        <div class="ot-kpi3-val">${Math.floor(actH)}<span>h ${Math.round(totW%60)}m</span></div>
+        <div><span class="ot-kpi3-badge under">${byM.reduce((s,m)=>s+m.weekCnt,0)}주 기록</span></div>
+      </div>
+      <div class="ot-kpi3-item">
+        <div class="ot-kpi3-label">기준 대비</div>
+        <div class="ot-kpi3-val ${isOver?'c-over':'c-under'}">${isOver?'+':'-'}${dh}<span>h ${dm}m</span></div>
+        <div><span class="ot-kpi3-badge ${isOver?'over':'under'}">${isOver?'초과':'미달'}</span></div>
+      </div>
+      <div class="ot-kpi3-item">
+        <div class="ot-kpi3-label">보상 휴가</div>
+        <div class="ot-kpi3-val ${leaveDays>0?'c-leave':'c-under'}">${leaveDays>0?leaveDays:0}<span>일</span></div>
+        <div><span class="ot-kpi3-badge ${leaveDays>0?'leave':'under'}">${leaveDays>0?'초과 ÷ 8h':'해당 없음'}</span></div>
+      </div>
+    </div>
+  </div>`;
 
   document.getElementById('q-kpi').innerHTML=`
     <div class="kpi hi-blue"><div class="kl">${q}분기 총 근무시간</div>
