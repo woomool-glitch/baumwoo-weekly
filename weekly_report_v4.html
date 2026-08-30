@@ -407,6 +407,9 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
     <button class="login-btn" onclick="doLogin()">입력</button>
     <div class="login-err" id="loginErr"></div>
     <div style="font-size:10px;color:#aaa;margin-top:6px;text-align:center">초기 비밀번호: 0000</div>
+    <div style="margin-top:10px;text-align:center">
+      <button onclick="resetPw()" style="font-size:10px;background:none;border:none;color:#bbb;cursor:pointer;text-decoration:underline">비밀번호를 잊었어요</button>
+    </div>
   </div>
 </div>
 
@@ -840,6 +843,14 @@ function loadWeek(k){return loadDB()[k]||null;}
 ═══════════════════════════════════ */
 const PW_KEY = 'baumwoo_pw';
 
+function resetPw(){
+  if(confirm('비밀번호를 초기값(0000)으로 초기화할까요?\n초기화 후 로그인하면 비밀번호 변경 버튼으로 새 비번을 설정하세요.')){
+    localStorage.removeItem(PW_KEY);
+    alert('초기화 완료! 0000으로 로그인하세요.');
+    document.getElementById('loginPw').value='';
+    document.getElementById('loginPw').focus();
+  }
+}
 function getSavedPw(){
   return localStorage.getItem(PW_KEY) || '0000';
 }
