@@ -745,6 +745,9 @@ function parseTime(v){
   const s=String(v).replace(/[\r\n].*/,'').replace(/\[.*?\]/g,'').replace(/\(.*?\)/g,'').trim();
   if(!s)return null;
   if(/^0\.\d+$/.test(s)){const m=Math.round(parseFloat(s)*1440);return m%1440;}
+  // +HH:MM 형식 — 자정 넘긴 시간 (예: +00:08 → 8분)
+  const mPlus=s.match(/^\+(\d{1,2})[:\s](\d{2})/);
+  if(mPlus)return parseInt(mPlus[1])*60+parseInt(mPlus[2]);
   const m1=s.match(/^(\d{1,2})[:\s시](\d{2})/);
   if(m1)return parseInt(m1[1])*60+parseInt(m1[2]);
   const m2=s.match(/^(\d{2})(\d{2})$/);
