@@ -1649,7 +1649,7 @@ function exportMonth(){
   let allData=[[`${y}년 ${m}월 월간 업무일지`],[]];
   let totW=0,totR=0,totMC=0,totMA=0;
   weeks.forEach(sv=>{
-    const mon=new Date(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+    const mon=parseLocalDate(sv.monday);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     allData.push([`${sv.week}주차  ${fmtFull(mon)} ~ ${fmtFull(sun)}`]);
     allData.push(['날짜','요일','업무내용','업무시간합계','휴게시간','비고','식대']);
     let ww=0,wr=0,wc=0,wa=0;
@@ -1740,7 +1740,7 @@ function renderMonthly(){
   const OT_WEEK=52*60;
   Object.values(db).forEach(sv=>{
     if(!sv.days)return;
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     let wkMin=0;
     sv.days.forEach((d,idx)=>{
       if(d.extra||!mon)return;
@@ -1851,7 +1851,7 @@ function renderMonthlySummary(year, month){
   // 모든 저장 주차 순회
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = new Date(sv.monday);
+    const mon = parseLocalDate(sv.monday);
     let weekWorkMin = 0; // 이 주차 중 해당 월에 속하는 날들의 근무시간 합
 
     sv.days.forEach((d, idx)=>{
@@ -1959,7 +1959,7 @@ function renderDetailByWeek(data){
   </tr></thead>`;
   const tbody=document.createElement('tbody');
   data.forEach(sv=>{
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     const sun=new Date(mon);sun.setDate(sun.getDate()+6);
     const period=`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
     if(tbody.children.length>0){
@@ -2015,7 +2015,7 @@ function renderDetailByMonth(year, month, db){
   const dayMap={};
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon=new Date(sv.monday);
+    const mon=parseLocalDate(sv.monday);
     sv.days.forEach((d,idx)=>{
       if(d.extra) return;
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
@@ -2082,7 +2082,7 @@ function renderTaskList(year, month, db){
 
   Object.values(db).forEach(sv=>{
     if(!sv.days) return;
-    const mon = new Date(sv.monday);
+    const mon = parseLocalDate(sv.monday);
     sv.days.forEach((d, idx)=>{
       if(d.extra) return;
       const dd = new Date(mon); dd.setDate(dd.getDate()+idx);
