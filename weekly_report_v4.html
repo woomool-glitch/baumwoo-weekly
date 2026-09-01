@@ -734,6 +734,8 @@ function getMonday(d){const dt=new Date(d);const day=dt.getDay();dt.setDate(dt.g
 function fmtFull(d){return`${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일`;}
 function fmtDay(d){return String(d.getDate()).padStart(2,'0')+'일';}
 function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// ISO 날짜 문자열을 로컬 시간 기준으로 파싱 (UTC 파싱으로 인한 timezone 오류 방지)
+function parseLocalDate(s){if(!s)return null;const p=String(s).split('-');if(p.length<3)return null;return new Date(+p[0],+p[1]-1,+p[2]);}
 function wNum(d){return Math.ceil(d.getDate()/7);}
 
 /* ═══════════════════════════════════
