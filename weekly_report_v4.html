@@ -737,19 +737,29 @@ function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2
 // ISO 날짜 문자열을 로컬 시간 기준으로 파싱 (UTC 파싱으로 인한 timezone 오류 방지)
 function parseLocalDate(s){if(!s)return null;const p=String(s).split('-');if(p.length<3)return null;return new Date(+p[0],+p[1]-1,+p[2]);}
 function wNum(d){return Math.ceil(d.getDate()/7);}
-// 월~금 중 날짜가 많은 달을 기준으로 연/월/주차 결정
-function majorityMonthInfo(mon){
+// 월~금 중 날짜가 많은 달 반환
+function getMajorityMonth(mon){
   const cnt={};
   for(let i=0;i<5;i++){
     const d=new Date(mon);d.setDate(d.getDate()+i);
     const k=d.getFullYear()+'-'+(d.getMonth()+1);
-    if(!cnt[k])cnt[k]={year:d.getFullYear(),month:d.getMonth()+1,count:0,firstDay:d};
+    if(!cnt[k])cnt[k]={year:d.getFullYear(),month:d.getMonth()+1,count:0};
     cnt[k].count++;
   }
-  // 가장 많은 달 선택 (동수면 나중 달)
-  const best=Object.values(cnt).reduce((a,b)=>b.count>=a.count?b:a);
-  // 그 달의 첫 번째 평일(이 주의)을 기준으로 wNum 계산
-  return{year:best.year,month:best.month,week:wNum(best.firstDay)};
+  return Object.values(cnt).reduce((a,b)=>b.count>=a.count?b:a);
+}
+// 해당 주의 연/월/주차 결정: 같은 달로 귀속된 이전 주 수를 역산해 주차 계산
+function majorityMonthInfo(mon){
+  const cur=getMajorityMonth(mon);
+  let week=1;
+  const check=new Date(mon);
+  for(let i=0;i<6;i++){
+    check.setDate(check.getDate()-7);
+    const prev=getMajorityMonth(check);
+    if(prev.year!==cur.year||prev.month!==cur.month)break;
+    week++;
+  }
+  return{year:cur.year,month:cur.month,week};
 }
 
 /* ═══════════════════════════════════
