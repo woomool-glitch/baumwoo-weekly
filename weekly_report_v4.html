@@ -737,6 +737,20 @@ function fmtKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2
 // ISO 날짜 문자열을 로컬 시간 기준으로 파싱 (UTC 파싱으로 인한 timezone 오류 방지)
 function parseLocalDate(s){if(!s)return null;const p=String(s).split('-');if(p.length<3)return null;return new Date(+p[0],+p[1]-1,+p[2]);}
 function wNum(d){return Math.ceil(d.getDate()/7);}
+// 월~금 중 날짜가 많은 달을 기준으로 연/월/주차 결정
+function majorityMonthInfo(mon){
+  const cnt={};
+  for(let i=0;i<5;i++){
+    const d=new Date(mon);d.setDate(d.getDate()+i);
+    const k=d.getFullYear()+'-'+(d.getMonth()+1);
+    if(!cnt[k])cnt[k]={year:d.getFullYear(),month:d.getMonth()+1,count:0,firstDay:d};
+    cnt[k].count++;
+  }
+  // 가장 많은 달 선택 (동수면 나중 달)
+  const best=Object.values(cnt).reduce((a,b)=>b.count>=a.count?b:a);
+  // 그 달의 첫 번째 평일(이 주의)을 기준으로 wNum 계산
+  return{year:best.year,month:best.month,week:wNum(best.firstDay)};
+}
 
 /* ═══════════════════════════════════
    시간 파싱
@@ -1044,7 +1058,8 @@ function buildRows(){
 ═══════════════════════════════════ */
 function renderHeader(){
   const sun=new Date(curMon);sun.setDate(sun.getDate()+6);
-  document.getElementById('wlbl').textContent=`${curMon.getFullYear()}년 ${curMon.getMonth()+1}월 ${wNum(curMon)}주차`;
+  const wInfo=majorityMonthInfo(curMon);
+  document.getElementById('wlbl').textContent=`${wInfo.year}년 ${wInfo.month}월 ${wInfo.week}주차`;
   document.getElementById('pbar-date').textContent=
     `${fmtFull(curMon)} 월요일 ~ ${fmtFull(sun)} 일요일`;
   updateDocTitle();
@@ -1079,9 +1094,10 @@ function toggleHoliday(i){
 }
 
 function updateDocTitle(){
-  const y=String(curMon.getFullYear()).slice(2);
-  const m=curMon.getMonth()+1;
-  const w=wNum(curMon);
+  const wInfo2=majorityMonthInfo(curMon);
+  const y=String(wInfo2.year).slice(2);
+  const m=wInfo2.month;
+  const w=wInfo2.week;
   document.getElementById('docTitleText').textContent=`${y}년 ${m}월 ${w}주차 주간업무일지`;
 }
 function saveDocName(v){
@@ -1547,7 +1563,7 @@ function saveWeek(){
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
   });
   db[key]={
-    monday:key,year:curMon.getFullYear(),month:curMon.getMonth()+1,week:wNum(curMon),
+    monday:key,year:majorityMonthInfo(curMon).year,month:majorityMonthInfo(curMon).month,week:majorityMonthInfo(curMon).week,
     days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false,manualRest:r.manualRest||false,partnerOffice:r.partnerOffice||false})),
     special:document.getElementById('spNote').value,
     totalWorkMin:tw,totalRestMin:tr,
@@ -1618,7 +1634,8 @@ function exportWeek(){
   // 현재 미저장 상태라도 rows 데이터로 생성
   const wb=XLSX.utils.book_new();
   const sun=new Date(curMon);sun.setDate(sun.getDate()+6);
-  const title=`${curMon.getFullYear()}년 ${curMon.getMonth()+1}월 ${wNum(curMon)}주차  ${fmtFull(curMon)} ~ ${fmtFull(sun)}  주요업무 내용 및 시간`;
+  const wInfo3=majorityMonthInfo(curMon);
+  const title=`${wInfo3.year}년 ${wInfo3.month}월 ${wInfo3.week}주차  ${fmtFull(curMon)} ~ ${fmtFull(sun)}  주요업무 내용 및 시간`;
   const wsData=[[title],['날짜','요일','업무내용','업무시간합계','휴게시간','비고','식대']];
   let tw=0,tr2=0,tc=0,ta=0;
   rows.forEach(r=>{
@@ -1637,7 +1654,7 @@ function exportWeek(){
   const ws=XLSX.utils.aoa_to_sheet(wsData);
   ws['!cols']=[{wch:8},{wch:5},{wch:40},{wch:14},{wch:10},{wch:16},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws,'주간업무일지');
-  const fname=`주간업무일지_${curMon.getFullYear()}${String(curMon.getMonth()+1).padStart(2,'0')}${wNum(curMon)}주차.xlsx`;
+  const fname=`주간업무일지_${wInfo3.year}${String(wInfo3.month).padStart(2,'0')}${wInfo3.week}주차.xlsx`;
   XLSX.writeFile(wb,fname);
   showToast('주간 엑셀 저장 완료');
 }
