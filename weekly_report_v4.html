@@ -159,6 +159,9 @@ tr.hol-row td{background:rgba(245,158,11,.04)!important}
 .partner-badge{display:none;font-size:8px;font-weight:700;background:#6366f1;color:#fff;padding:1px 4px;border-radius:3px;line-height:1.4}
 tr.partner-row .partner-badge{display:inline}
 tr.partner-row .wc{color:#4f46e5!important}
+.early-badge{display:none;font-size:8px;font-weight:700;background:#f97316;color:#fff;padding:1px 4px;border-radius:3px;line-height:1.4}
+tr.early-row .early-badge{display:inline}
+tr.early-row .wc{color:#ea580c!important}
 .nc{text-align:center;white-space:nowrap}
 .mc{text-align:center;white-space:nowrap;font-size:11px}
 tr.sat td,tr.sat .dc,tr.sat .wc{color:var(--blue)!important}
@@ -786,14 +789,15 @@ function calcWork(inM,outM,restM){
   return Math.max(0,d-restM);
 }
 // 2026-07-06 이후 평일 출근 기준 보정
-// isPartner=true → 합사 9:30(570분), false → 본사 9:00(540분)
+// isPartner=true → 합사 9:30(570분), false → 본사 9:00(540분), isEarlyStart=true → 실제출근시간 그대로
 const WORK_RULE_DATE=new Date(2026,6,6);
-function effectiveInM(inM,date,isHoliday,isPartner){
+function effectiveInM(inM,date,isHoliday,isPartner,isEarlyStart){
   if(inM==null||!date)return inM;
   const d=date instanceof Date?date:new Date(date);
   if(isNaN(d.getTime())||d<WORK_RULE_DATE)return inM;
   const dow=d.getDay();
   if(dow===0||dow===6||isHoliday)return inM;
+  if(isEarlyStart)return inM; // 조기출근: 실제 출근시간 그대로
   return Math.max(inM, isPartner?570:540); // 합사=9:30, 본사=9:00
 }
 function isON(inM,outM){return inM!=null&&outM!=null&&outM<inM;}
@@ -1045,10 +1049,10 @@ function buildRows(){
   const sv=loadWeek(fmtKey(curMon));rows=[];
   for(let i=0;i<7;i++){
     const d=new Date(curMon);d.setDate(d.getDate()+i);
-    const def={date:d,task:'',inTime:'',outTime:'',rest:1,note:'',imp:false,holiday:false,extra:false,manualRest:false,partnerOffice:false};
+    const def={date:d,task:'',inTime:'',outTime:'',rest:1,note:'',imp:false,holiday:false,extra:false,manualRest:false,partnerOffice:false,earlyStart:false};
     if(sv?.days?.[i]){
       const s=sv.days[i];
-      rows.push({...def,task:s.task||'',inTime:s.inTime||'',outTime:s.outTime||'',rest:s.rest??1,note:s.note||'',imp:s.imp||false,holiday:s.holiday||false,manualRest:s.manualRest||false,partnerOffice:s.partnerOffice||false});
+      rows.push({...def,task:s.task||'',inTime:s.inTime||'',outTime:s.outTime||'',rest:s.rest??1,note:s.note||'',imp:s.imp||false,holiday:s.holiday||false,manualRest:s.manualRest||false,partnerOffice:s.partnerOffice||false,earlyStart:s.earlyStart||false});
     }else rows.push(def);
   }
   // 일요일 아래 추가 3행 (날짜 없는 빈 행)
@@ -1078,7 +1082,14 @@ function togglePartner(i){
   if(!rows[i]||rows[i].extra||!rows[i].date)return;
   const dow=rows[i].date.getDay();
   if(dow===6||dow===0)return;
-  rows[i].partnerOffice=!rows[i].partnerOffice;
+  // 3단계 사이클: 본사(기본) → 합사 → 조기출근 → 본사
+  if(!rows[i].partnerOffice&&!rows[i].earlyStart){
+    rows[i].partnerOffice=true; rows[i].earlyStart=false;  // → 합사
+  } else if(rows[i].partnerOffice&&!rows[i].earlyStart){
+    rows[i].partnerOffice=false; rows[i].earlyStart=true;  // → 조기출근
+  } else {
+    rows[i].partnerOffice=false; rows[i].earlyStart=false; // → 본사(초기화)
+  }
   rows[i].manualRest=false;
   updateRow(i);
   updateTotals();
@@ -1157,15 +1168,16 @@ function renderTable(){
     const dow=r.date.getDay();
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime);
     const restM=Math.round((r.rest||0)*60);
-    const effInM=effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false);
+    const effInM=effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false,r.earlyStart||false);
     const wm=calcWork(effInM,outM,restM);
     const ot=isON(inM,outM);
     const meal=calcMeal(inM,outM,dow,r.holiday);
     if(dow===6)tr.classList.add('sat');else if(dow===0)tr.classList.add('sun');
     if(r.holiday&&dow!==6&&dow!==0)tr.classList.add('hol-row');
     else tr.classList.remove('hol-row');
-    if(r.partnerOffice&&dow!==6&&dow!==0)tr.classList.add('partner-row');
-    else tr.classList.remove('partner-row');
+    if(r.partnerOffice&&dow!==6&&dow!==0){tr.classList.add('partner-row');tr.classList.remove('early-row');}
+    else if(r.earlyStart&&dow!==6&&dow!==0){tr.classList.add('early-row');tr.classList.remove('partner-row');}
+    else{tr.classList.remove('partner-row');tr.classList.remove('early-row');}
     if(ot)tr.classList.add('otr');
     if(r.imp) tr.classList.add('imp');
 
@@ -1185,7 +1197,7 @@ function renderTable(){
         <span class="hol-toggle" onclick="toggleHoliday(${i})" title="클릭 시 공휴일 지정/해제">${fmtDay(r.date)}<span class="hol-badge">공</span></span>
       </td>
       <td class="wc selectable" data-row="${i}" data-col="1">
-        <span class="partner-toggle" onclick="togglePartner(${i})" title="클릭 시 합사(9:30기준)/본사(9:00기준) 전환">${DAYS[dow]}<span class="partner-badge">합</span></span>
+        <span class="partner-toggle" onclick="togglePartner(${i})" title="클릭: 본사(9:00)→합사(9:30)→조기출근(실제시간) 순환">${DAYS[dow]}<span class="partner-badge">합</span><span class="early-badge">조</span></span>
       </td>
       <td class="task-cell selectable" data-row="${i}" data-col="2"><textarea class="task-inp" placeholder="${(dow===6||dow===0)?'':'업무내용 입력'}" data-i="${i}" data-f="task" rows="1" onInput="autoResize(this)">${esc(r.task)}</textarea></td>
       <td class="tc selectable" data-row="${i}" data-col="3" style="white-space:nowrap;text-align:center">${noWork?'-':`<input class="inp${r.imp?' auto':''}" id="in-${i}" value="${inDisp}" placeholder="09:00" maxlength="5" data-i="${i}" data-f="inTime" style="width:100%">`}</td>
@@ -1292,7 +1304,7 @@ function updateRow(i){
   // 퇴근시간 변경 시 휴게시간 자동 조정
   autoRest(i);
 
-  const wm=calcWork(effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false),outM,Math.round((r.rest||0)*60));
+  const wm=calcWork(effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false,r.earlyStart||false),outM,Math.round((r.rest||0)*60));
   const ot=isON(inM,outM);
   const meal=calcMeal(inM,outM,dow,r.holiday);
   const noWork=r.imp&&r.inTime==='-';
@@ -1312,7 +1324,9 @@ function updateRow(i){
   if(tr){
     ot?tr.classList.add('otr'):tr.classList.remove('otr');
     (r.holiday&&dow!==6&&dow!==0)?tr.classList.add('hol-row'):tr.classList.remove('hol-row');
-    (r.partnerOffice&&dow!==6&&dow!==0)?tr.classList.add('partner-row'):tr.classList.remove('partner-row');
+    if(r.partnerOffice&&dow!==6&&dow!==0){tr.classList.add('partner-row');tr.classList.remove('early-row');}
+    else if(r.earlyStart&&dow!==6&&dow!==0){tr.classList.add('early-row');tr.classList.remove('partner-row');}
+    else{tr.classList.remove('partner-row');tr.classList.remove('early-row');}
   }
   updateTotals();
 }
@@ -1328,7 +1342,7 @@ function updateTotals(){
     if(r.extra) return; // 추가 빈 행 제외
     const dow=r.date.getDay();
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false),outM,restM);
+    const wm=calcWork(effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false,r.earlyStart||false),outM,restM);
     if(wm!=null){tw+=wm;hw=true;}
     if(inM!=null&&outM!=null){tr2+=restM;hr=true;}
     const meal=calcMeal(inM,outM,dow,r.holiday);
@@ -1574,7 +1588,7 @@ function saveWeek(){
   });
   db[key]={
     monday:key,year:majorityMonthInfo(curMon).year,month:majorityMonthInfo(curMon).month,week:majorityMonthInfo(curMon).week,
-    days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false,manualRest:r.manualRest||false,partnerOffice:r.partnerOffice||false})),
+    days:rows.map(r=>({task:r.task,inTime:r.inTime,outTime:r.outTime,rest:r.rest,note:r.note,imp:r.imp,holiday:r.holiday,extra:r.extra||false,manualRest:r.manualRest||false,partnerOffice:r.partnerOffice||false,earlyStart:r.earlyStart||false})),
     special:document.getElementById('spNote').value,
     totalWorkMin:tw,totalRestMin:tr,
     meal:{eveCnt,eveAmt,wkdCnt,wkdAmt,totalCnt:eveCnt+wkdCnt,totalAmt:eveAmt+wkdAmt},
@@ -2547,7 +2561,7 @@ function importDB(input){
     if(badge) return badge.textContent.trim();
     // 날짜/요일 셀: 공·합 뱃지 텍스트 제외
     const clone=td.cloneNode(true);
-    clone.querySelectorAll('.hol-badge,.partner-badge').forEach(el=>el.remove());
+    clone.querySelectorAll('.hol-badge,.partner-badge,.early-badge').forEach(el=>el.remove());
     return clone.textContent.trim();
   }
 
