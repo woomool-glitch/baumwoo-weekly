@@ -1791,7 +1791,8 @@ function renderMonthly(){
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
       if(dd<firstDay||dd>lastDay)return;
       const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);if(wm==null)return;
+      const effInM=effectiveInM(inM,dd,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+      const wm=calcWork(effInM,outM,restM);if(wm==null)return;
       wkMin+=wm; kpiWork+=wm; kpiDays++;
       const meal=calcMeal(inM,outM,dd.getDay(),d.holiday||false);
       if(meal.type==='eve'){kpiEveCnt+=meal.count;kpiEveAmt+=meal.amt;}
@@ -1862,16 +1863,16 @@ function renderMonthly(){
     }
   }
 
-  // ── 주차별 상세 테이블 ──
-  _detailMode = 'week';
+  // ── 주차별 상세 테이블 ── (현재 선택된 뷰 모드 유지)
   _detailArgs = {year, month, data, db};
   if(!data.length){
     document.getElementById('mtbl').innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
+    setDetailMode(_detailMode); // 버튼 상태 동기화
     renderMonthlySummary(year,month);
     renderTaskList(year,month,db);
     return;
   }
-  renderDetailByWeek(data);
+  setDetailMode(_detailMode); // 현재 모드 유지 + 버튼 상태 동기화
 
   // ── 월별 집계 ──
   renderMonthlySummary(year,month);
@@ -1908,7 +1909,8 @@ function renderMonthlySummary(year, month){
       const inM  = parseTime(d.inTime);
       const outM = parseTime(d.outTime);
       const restM= Math.round((d.rest||0)*60);
-      const wm   = calcWork(inM, outM, restM);
+      const effInM2=effectiveInM(inM,dayDate,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+      const wm   = calcWork(effInM2, outM, restM);
       if(wm == null) return;
 
       weekWorkMin += wm;
@@ -2021,7 +2023,8 @@ function renderDetailByWeek(data){
       const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
       const dow=dd.getDay();
       const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-      const wm=calcWork(inM,outM,restM);
+      const effInM=effectiveInM(inM,dd,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+      const wm=calcWork(effInM,outM,restM);
       const meal=calcMeal(inM,outM,dow,d.holiday||false);
       if(wm!=null) wkWork+=wm;
       if(inM!=null&&outM!=null) wkRestMin+=restM;
@@ -2086,7 +2089,8 @@ function renderDetailByMonth(year, month, db){
     const {date:dd, day:d}=dayMap[k];
     const dow=dd.getDay();
     const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);
+    const effInM=effectiveInM(inM,dd,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+    const wm=calcWork(effInM,outM,restM);
     const meal=calcMeal(inM,outM,dow,d.holiday||false);
     if(wm!=null) totWork+=wm;
     if(inM!=null&&outM!=null) totRestMin+=restM;
