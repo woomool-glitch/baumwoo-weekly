@@ -1581,7 +1581,8 @@ function saveWeek(){
   rows.forEach(r=>{
     if(r.extra) return;
     const inM=parseTime(r.inTime),outM=parseTime(r.outTime),restM=Math.round((r.rest||0)*60);
-    const wm=calcWork(inM,outM,restM);if(wm!=null){tw+=wm;if(inM!=null&&outM!=null)tr+=restM;}
+    const effInM=effectiveInM(inM,r.date,r.holiday,r.partnerOffice||false,r.earlyStart||false);
+    const wm=calcWork(effInM,outM,restM);if(wm!=null){tw+=wm;if(inM!=null&&outM!=null)tr+=restM;}
     const meal=calcMeal(inM,outM,r.date.getDay(),r.holiday);
     if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
     if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
@@ -2248,9 +2249,15 @@ function renderQuarter(){
   const qDefs=qMonths[q];
   const qLabels={1:`${year-1}년 12월 ~ ${year}년 2월`,2:`${year}년 3~5월`,3:`${year}년 6~8월`,4:`${year}년 9~11월`};
 
-  // 월별 집계
+  // 월별 집계 — monday(주 시작일) 기준으로 필터링 (month majority 기준 사용 시 월말 주 누락 방지)
   const byM=qDefs.map(({y,m})=>{
-    const weeks=Object.values(db).filter(d=>d.year===y&&d.month===m);
+    const mStart=new Date(y,m-1,1);
+    const mEnd=new Date(y,m,0); // 해당 월 마지막 날
+    const weeks=Object.values(db).filter(d=>{
+      if(!d.monday)return d.year===y&&d.month===m; // 구버전 호환
+      const mon=parseLocalDate(d.monday);
+      return mon&&mon>=mStart&&mon<=mEnd;
+    });
     return{
       y, m, workMin:weeks.reduce((s,d)=>s+(d.totalWorkMin||0),0),
       weekCnt:weeks.length,
@@ -2378,14 +2385,18 @@ function renderQuarter(){
 function renderStats(){
   const db=loadDB();
   const year=parseInt(document.getElementById('stY').value||new Date().getFullYear());
-  const allData=Object.values(db).filter(d=>d.year===year);
+  const allData=Object.values(db);
 
-  // 월별로 집계 (1~12월)
+  // 월별로 집계 (1~12월) — monday 기준으로 해당 연도 월 분류
   const byMonth=Array.from({length:12},(_,i)=>({
     m:i+1, workMin:0, weekCnt:0, eveCnt:0, eveAmt:0, wkdCnt:0, wkdAmt:0
   }));
   allData.forEach(d=>{
-    const mi=d.month-1;
+    // monday 기준으로 year/month 판별 (구버전은 d.year/d.month 사용)
+    let dy=d.year, dm=d.month;
+    if(d.monday){const mon=parseLocalDate(d.monday);if(mon){dy=mon.getFullYear();dm=mon.getMonth()+1;}}
+    if(dy!==year)return;
+    const mi=dm-1;
     byMonth[mi].workMin+=d.totalWorkMin||0;
     byMonth[mi].weekCnt++;
     byMonth[mi].eveCnt+=(d.meal?.eveCnt||0);
