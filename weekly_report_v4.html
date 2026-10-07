@@ -677,9 +677,6 @@ table.ghost td.sel-anchor{background:rgba(26,106,191,0.20)!important;box-shadow:
     </div>
     <div style="overflow-x:auto"><table class="mtbl" id="mtbl"></table></div>
 
-    <!-- ④ 업무내용 날짜순 리스트 -->
-    <div class="shd" style="margin-top:28px">업무내용 — 날짜순</div>
-    <div id="task-list"></div>
   </div>
 
   <!-- ─ 분기별 ─ -->
@@ -1869,7 +1866,6 @@ function renderMonthly(){
     document.getElementById('mtbl').innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--tx3)">저장된 데이터가 없습니다</td></tr>';
     setDetailMode(_detailMode); // 버튼 상태 동기화
     renderMonthlySummary(year,month);
-    renderTaskList(year,month,db);
     return;
   }
   setDetailMode(_detailMode); // 현재 모드 유지 + 버튼 상태 동기화
@@ -2253,23 +2249,32 @@ function renderQuarter(){
   const qDefs=qMonths[q];
   const qLabels={1:`${year-1}년 12월 ~ ${year}년 2월`,2:`${year}년 3~5월`,3:`${year}년 6~8월`,4:`${year}년 9~11월`};
 
-  // 월별 집계 — monday(주 시작일) 기준으로 필터링 (month majority 기준 사용 시 월말 주 누락 방지)
+  // 월별 집계 — 날짜별로 쪼개서 해당 월 1일~말일에 속하는 날만 집계 (주 전체 시간 사용 금지)
   const byM=qDefs.map(({y,m})=>{
     const mStart=new Date(y,m-1,1);
-    const mEnd=new Date(y,m,0); // 해당 월 마지막 날
-    const weeks=Object.values(db).filter(d=>{
-      if(!d.monday)return d.year===y&&d.month===m; // 구버전 호환
-      const mon=parseLocalDate(d.monday);
-      return mon&&mon>=mStart&&mon<=mEnd;
+    const mEnd=new Date(y,m,0);
+    let workMin=0,weekCnt=0,eveCnt=0,eveAmt=0,wkdCnt=0,wkdAmt=0;
+    const countedWeeks=new Set();
+    Object.values(db).forEach(sv=>{
+      if(!sv.days)return;
+      const mon=parseLocalDate(sv.monday);
+      if(!mon)return;
+      sv.days.forEach((d,idx)=>{
+        if(d.extra)return;
+        const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
+        if(dd<mStart||dd>mEnd)return;
+        const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
+        const effInM=effectiveInM(inM,dd,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+        const wm=calcWork(effInM,outM,restM);
+        if(wm!=null)workMin+=wm;
+        const meal=calcMeal(inM,outM,dd.getDay(),d.holiday||false);
+        if(meal.type==='eve'){eveCnt+=meal.count;eveAmt+=meal.amt;}
+        if(meal.type==='wkd'){wkdCnt+=meal.count;wkdAmt+=meal.amt;}
+        if(!countedWeeks.has(sv.monday))countedWeeks.add(sv.monday);
+      });
     });
-    return{
-      y, m, workMin:weeks.reduce((s,d)=>s+(d.totalWorkMin||0),0),
-      weekCnt:weeks.length,
-      eveCnt:weeks.reduce((s,d)=>s+(d.meal?.eveCnt||0),0),
-      eveAmt:weeks.reduce((s,d)=>s+(d.meal?.eveAmt||0),0),
-      wkdCnt:weeks.reduce((s,d)=>s+(d.meal?.wkdCnt||0),0),
-      wkdAmt:weeks.reduce((s,d)=>s+(d.meal?.wkdAmt||0),0),
-    };
+    weekCnt=countedWeeks.size;
+    return{y,m,workMin,weekCnt,eveCnt,eveAmt,wkdCnt,wkdAmt};
   });
 
   const totW=byM.reduce((s,m)=>s+m.workMin,0);
@@ -2391,23 +2396,31 @@ function renderStats(){
   const year=parseInt(document.getElementById('stY').value||new Date().getFullYear());
   const allData=Object.values(db);
 
-  // 월별로 집계 (1~12월) — monday 기준으로 해당 연도 월 분류
+  // 월별로 집계 (1~12월) — 날짜별로 쪼개서 해당 연도 월에 속하는 날만 집계
   const byMonth=Array.from({length:12},(_,i)=>({
     m:i+1, workMin:0, weekCnt:0, eveCnt:0, eveAmt:0, wkdCnt:0, wkdAmt:0
   }));
-  allData.forEach(d=>{
-    // monday 기준으로 year/month 판별 (구버전은 d.year/d.month 사용)
-    let dy=d.year, dm=d.month;
-    if(d.monday){const mon=parseLocalDate(d.monday);if(mon){dy=mon.getFullYear();dm=mon.getMonth()+1;}}
-    if(dy!==year)return;
-    const mi=dm-1;
-    byMonth[mi].workMin+=d.totalWorkMin||0;
-    byMonth[mi].weekCnt++;
-    byMonth[mi].eveCnt+=(d.meal?.eveCnt||0);
-    byMonth[mi].eveAmt+=(d.meal?.eveAmt||0);
-    byMonth[mi].wkdCnt+=(d.meal?.wkdCnt||0);
-    byMonth[mi].wkdAmt+=(d.meal?.wkdAmt||0);
+  const countedWeeksAnnual=Array.from({length:12},()=>new Set());
+  allData.forEach(sv=>{
+    if(!sv.days)return;
+    const mon=parseLocalDate(sv.monday);
+    if(!mon)return;
+    sv.days.forEach((d,idx)=>{
+      if(d.extra)return;
+      const dd=new Date(mon);dd.setDate(dd.getDate()+idx);
+      if(dd.getFullYear()!==year)return;
+      const mi=dd.getMonth();
+      const inM=parseTime(d.inTime),outM=parseTime(d.outTime),restM=Math.round((d.rest||0)*60);
+      const effInM=effectiveInM(inM,dd,d.holiday||false,d.partnerOffice||false,d.earlyStart||false);
+      const wm=calcWork(effInM,outM,restM);
+      if(wm!=null)byMonth[mi].workMin+=wm;
+      const meal=calcMeal(inM,outM,dd.getDay(),d.holiday||false);
+      if(meal.type==='eve'){byMonth[mi].eveCnt+=meal.count;byMonth[mi].eveAmt+=meal.amt;}
+      if(meal.type==='wkd'){byMonth[mi].wkdCnt+=meal.count;byMonth[mi].wkdAmt+=meal.amt;}
+      if(!countedWeeksAnnual[mi].has(sv.monday))countedWeeksAnnual[mi].add(sv.monday);
+    });
   });
+  byMonth.forEach((bm,i)=>{bm.weekCnt=countedWeeksAnnual[i].size;});
 
   // 연간 합산 KPI
   const totWork=byMonth.reduce((s,m)=>s+m.workMin,0);
